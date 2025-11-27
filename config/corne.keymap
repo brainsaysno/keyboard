@@ -40,7 +40,7 @@
                         bindings = <
    &kp TAB    &kp N1       &kp N2       &kp N3       &kp N4       &kp N5         &kp N6   &kp N7   &kp N8 &kp N9    &kp N0 &kp BSPC
    &bt BT_CLR &bt BT_SEL 0 &bt BT_SEL 1 &bt BT_SEL 2 &bt BT_SEL 3 &bt BT_SEL 4   &kp LEFT &kp DOWN &kp UP &kp RIGHT &trans &trans
-   &kp LSHFT  &trans       &trans       &trans       &trans       &trans         &mmv MOVE_LEFT &mmv MOVE_DOWN   &mmv MOVE_UP &mmv MOVE_RIGHT    &trans &trans
+   &kp LSHFT  &trans       &trans       &trans       &trans       &trans         &mv_left   &mv_down   &mv_up   &mv_right  &trans &trans
                                     &kp LGUI     &trans       &kp SPACE      &mkp LCLK  &trans   &mkp RCLK
                         >;
                 };
@@ -60,4 +60,34 @@
                         >;
                 };
         };
+
+    behaviors {
+        mv_left: mv_left {
+            compatible = "zmk,behavior-mod-morph";
+            label = "MOVE_LEFT_OVERRIDE";
+            bindings = <&mmv MOVE_LEFT>;
+            replacement-behavior = <&mmv MOVE_LEFT>;
+        };
+
+        mv_right: mv_right {
+            compatible = "zmk,behavior-mod-morph";
+            label = "MOVE_RIGHT_OVERRIDE";
+            bindings = <&mmv MOVE_RIGHT>;
+            replacement-behavior = <&mmv MOVE_RIGHT>;
+        };
+
+        mv_up: mv_up {
+            compatible = "zmk,behavior-mod-morph";
+            label = "MOVE_UP_OVERRIDE";
+            bindings = <&mmv MOVE_UP>;
+            replacement-behavior = <&mmv MOVE_UP>;
+        };
+
+        mv_down: mv_down {
+            compatible = "zmk,behavior-mod-morph";
+            label = "MOVE_DOWN_OVERRIDE";
+            bindings = <&mmv MOVE_DOWN>;
+            replacement-behavior = <&mmv MOVE_DOWN>;
+        };
+    };
 };

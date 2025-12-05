@@ -38,9 +38,9 @@
 // | SHFT |     |     |     |     |     |   |     |     |     |     |     |      |
 //                    | GUI |     | SPC |   |LCLICK|     | RCLICK |
                         bindings = <
-   &kp TAB    &kp N1       &kp N2       &kp N3       &kp N4       &kp N5         &kp N6   &kp N7   &kp N8 &kp N9    &kp N0 &kp BSPC
+   &kp TAB    &kp N1       &kp N2       &kp N3       &kp N4       &kp N5      &kp N6   &kp N7   &kp N8 &kp N9    &kp N0 &kp BSPC
    &trans  &bt BT_SEL 0 &bt BT_SEL 1 &bt BT_SEL 2 &bt BT_SEL 3 &bt BT_SEL 4   &kp LEFT &kp DOWN &kp UP &kp RIGHT &trans &trans
-   &kp LSHFT  &trans       &trans       &trans       &trans       &trans         &mv_left   &mv_down   &mv_up   &mv_right  &trans &trans
+   &kp LSHFT  &trans       &trans       &trans       &trans       &trans      &mmv MOVE_LEFT   &mmv MOVE_DOWN   &mmv MOVE_UP   &mmv MOVE_RIGHT  &trans &trans
                                     &kp LGUI     &trans       &kp SPACE      &mkp LCLK  &trans   &mkp RCLK
                         >;
                 };
@@ -60,34 +60,4 @@
                         >;
                 };
         };
-
-    behaviors {
-        mv_left: mv_left {
-            compatible = "zmk,behavior-mod-morph";
-            #binding-cells = <0>;
-            bindings = <&mmv MOVE_LEFT>, <&msc SCRL_LEFT>;
-            mods = <(MOD_LSFT|MOD_RSFT)>;
-        };
-
-        mv_right: mv_right {
-            compatible = "zmk,behavior-mod-morph";
-            #binding-cells = <0>;
-            bindings = <&mmv MOVE_RIGHT>, <&msc SCRL_RIGHT>;
-            mods = <(MOD_LSFT|MOD_RSFT)>;
-        };
-
-        mv_up: mv_up {
-            compatible = "zmk,behavior-mod-morph";
-            #binding-cells = <0>;
-            bindings = <&mmv MOVE_UP>, <&msc SCRL_UP>;
-            mods = <(MOD_LSFT|MOD_RSFT)>;
-        };
-
-        mv_down: mv_down {
-            compatible = "zmk,behavior-mod-morph";
-            #binding-cells = <0>;
-            bindings = <&mmv MOVE_DOWN>, <&msc SCRL_DOWN>;
-            mods = <(MOD_LSFT|MOD_RSFT)>;
-        };
-    };
 };

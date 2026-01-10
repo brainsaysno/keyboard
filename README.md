@@ -12,10 +12,10 @@
 <br />
 <div align="center">
   <a href="https://github.com/brainsaysno/keyboard">
-    <img width="80%" alt="Keyboard build" src="https://github.com/user-attachments/assets/021763f0-819f-497b-8a1f-c22a8b14172a"/>
+    <img width="30%" alt="Keyboard build" src="https://github.com/user-attachments/assets/021763f0-819f-497b-8a1f-c22a8b14172a"/>
   </a>
   <br/>
-  <i> ZMK config for a wireless, low profile Corne build with nice!nano v2s and nice!view displays. </i>
+  <i> zmk config for my wireless, low profile corne build with nice!nano v2s and nice!view displays </i>
   <br/>
   <br/>
 
@@ -36,7 +36,7 @@
     <li>
       <a href="#about-the-project">About the Project</a>
       <ul>
-        <li><a href="#key-features">Key Features</a></li>
+        <li><a href="#cool-tweaks">Cool Tweaks</a></li>
       </ul>
     </li>
     <li><a href="#layout">Layout</a></li>
@@ -46,9 +46,9 @@
 
 ## About the Project
 
-My [ZMK](https://zmk.dev/) config for my wireless, low profile [Corne](https://github.com/foostan/crkbd) build using nice!nano v2s and nice!view displays. It's part of my first pocketable build. Should be fairly straightforward to adapt to other setups. I also modeled and 3D printed a case for it.
+My [zmk](https://zmk.dev/) config for my wireless, low profile [corne](https://github.com/foostan/crkbd) build using nice!nano v2s and nice!view displays. It's part of my first pocketable build. Should be fairly straightforward to adapt to other setups. I also modeled and 3D printed a case for it.
 
-### Key Features
+### Cool Tweaks
 
 - **Ctrl/Esc combo:** Hold for ctrl, tap for escape. This is my most used keymap by far, and it's nice to have it in the firmware so it works in iOS as well
 - **Mouse emulation:** Move cursor and right/left click from lower layer
@@ -67,7 +67,7 @@ My [ZMK](https://zmk.dev/) config for my wireless, low profile [Corne](https://g
 
 ## Usage
 
-GitHub Action handles the build. Flash it and you're good to go.
+There's a github action which handles the build. Flash it and you're good to go.
 
 Feel free to use or adapt any of this for your own build.
 

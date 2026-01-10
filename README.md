@@ -1,19 +1,34 @@
 # brainsaysno/keyboard
 
-Suup, this is the ZMK config for my latest Corne build. I'm rocking nice!nano v2s and those fancy Nice!View displays because I like the aesthetics, but it shouldn't be too complicated to adapt the layout to other builds.
+![build photo]()
 
-## My personal layout
-It's a 3x6 Corne split.
-- **Base:** QWERTY-ish. Standard stuff.
-- **Lower:** Numbers and media controls. DJ mode engaged.
-- **Raise:** Symbols. For when I need to feel like a hacker.
+This is my [ZMK](https://zmk.dev/) config for my wireless, low profile [Corne](https://github.com/foostan/crkbd) build using nice!nano v2s and nice!view displays. It's part of my first pocketable build. Should be fairly straightforward to adapt to other setups.
 
-## Cool tweaks
-- 
+<details>
+<summary>
+I also modeled and 3D printed a case for it
+</summary>
+
+</details>
+
+## Layout
+
+3x6 Corne split.
+
+- **Base:** QWERTY-ish
+- **Lower:** Numbers, arrow keys (in vim's hjkl), and mouse emulation (right below it)
+- **Raise:** Symbols, media controls, and brightness
+
+## Cool Tweaks
+
+- **Ctrl/Esc combo:** Hold for ctrl, tap for escape. This is my most used keymap by far, and it's nice to have it in the firmware so it works in iOS as well
+- **Mouse emulation:** Move cursor and click from the lower layer
+- **Globe key:** For dictation with Wispr Flow
+- **Media and brightness controls:** On the raise layer
+- **Bluetooth profiles:** Quick switching across 5 devices
 
 ## Usage
-Flash it, plug it in, type words. Also, there's a github action to build it which should be the easiest workflow :)
 
-If you copy this and your keyboard starts mining crypto, that's a feature, not a bug. Also, I take no responsibility for tendinitis.
+There's a GitHub Action that handles the build, which is probably the easiest way to get started. Flash it and you're good to go.
 
-Enjoy.
+Feel free to use or adapt any of this for your own build.

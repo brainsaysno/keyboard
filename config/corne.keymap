@@ -12,7 +12,35 @@
 #include <dt-bindings/zmk/bt.h>
 #include <dt-bindings/zmk/pointing.h>
 
+// Host-side actions must bind these keys to the AirPods listening modes.
+#define AIRPODS_ANC F19
+#define AIRPODS_TRANSPARENCY F20
+#define CLIPBOARD_HISTORY F18
+
 / {
+        behaviors {
+                mouse_down_scroll: mouse_down_scroll {
+                        compatible = "zmk,behavior-shift-scroll";
+                        #binding-cells = <0>;
+                        bindings = <&mmv MOVE_DOWN>, <&msc SCRL_DOWN>;
+                };
+
+                mouse_up_scroll: mouse_up_scroll {
+                        compatible = "zmk,behavior-shift-scroll";
+                        #binding-cells = <0>;
+                        bindings = <&mmv MOVE_UP>, <&msc SCRL_UP>;
+                };
+        };
+
+        conditional_layers {
+                compatible = "zmk,conditional-layers";
+
+                adjust {
+                        if-layers = <1 2>;
+                        then-layer = <3>;
+                };
+        };
+
         keymap {
                 compatible = "zmk,keymap";
 
@@ -34,13 +62,14 @@
                         display-name = "Lower Layer";
 // -----------------------------------------------------------------------------------------
 // |  TAB |  1  |  2  |  3  |  4  |  5  |   |  6  |  7  |  8  |  9  |  0  | BSPC |
-// | BTCLR| BT1 | BT2 | BT3 | BT4 | BT5 |   | LFT | DWN |  UP | RGT |     |      |
-// | SHFT |     |     |     |     |     |   |     |     |     |     |     |      |
+// |  ⭐  | BT1 | BT2 | BT3 | BT4 | BT5 |   | LFT | DWN |  UP | RGT |     |      |
+// | SHFT |     |     | CLIP|     |     |   | MS< | MSD | MSU | MS> |     |      |
 //                    | GUI |     | SPC |   |LCLICK|     | RCLICK |
+// Hold Shift before M or comma to scroll down or up instead of moving the mouse.
                         bindings = <
    &kp TAB   &kp N1       &kp N2       &kp N3       &kp N4       &kp N5         &kp N6   &kp N7   &kp N8 &kp N9    &kp N0 &kp BSPC
    &trans    &bt BT_SEL 0 &bt BT_SEL 1 &bt BT_SEL 2 &bt BT_SEL 3 &bt BT_SEL 4   &kp LEFT &kp DOWN &kp UP &kp RIGHT &trans &trans
-   &kp LSHFT &trans       &trans       &trans       &trans       &trans         &mmv MOVE_LEFT   &mmv MOVE_DOWN   &mmv MOVE_UP   &mmv MOVE_RIGHT  &trans &trans
+   &kp LSHFT &trans       &trans       &kp CLIPBOARD_HISTORY &trans &trans      &mmv MOVE_LEFT   &mouse_down_scroll &mouse_up_scroll &mmv MOVE_RIGHT &trans &trans
                                        &kp LGUI     &trans       &kp SPACE      &mkp LCLK  &trans   &mkp RCLK
                         >;
                 };
@@ -50,13 +79,30 @@
 // -----------------------------------------------------------------------------------------
 // |  TAB |  !  |  @  |  #  |  $  |  %  |   |  ^  |  &  |  *  |  (  |  )  | BSPC |
 // |  ⭐  |  ⏮️ |  ⏯️ |  ⏭️ |  🔉 |  🔊 |   |  -  |  =  |  [  |  ]  |  \  |  `   |
-// | SHFT |     |     |     | ⏪ | ⏩ |   |  _  |  +  |  {  |  }  | "|" |  ~   |
+// | SHFT | MUTE| ANC | TRNS| BR- | BR+ |   |  _  |  +  |  {  |  }  | "|" |  ~   |
 //                    | GUI |     | SPC |   | ENT |     | ALT |
                         bindings = <
    &kp  TAB  &kp EXCL &kp AT &kp HASH &kp DLLR &kp PRCNT   &kp CARET &kp AMPS  &kp ASTRK &kp LPAR &kp RPAR &kp BSPC
    &trans &kp C_PREV &kp C_PP &kp C_NEXT &kp C_VOL_DN &kp C_VOL_UP      &kp MINUS &kp EQUAL &kp LBKT  &kp RBKT &kp BSLH &kp GRAVE
-   &kp LSHFT &bt BT_PRV &bt BT_CLR  &bt BT_NXT  &kp C_BRI_DN &kp C_BRI_UP          &kp UNDER &kp PLUS  &kp LBRC  &kp RBRC &kp PIPE &kp TILDE
+   &kp LSHFT &kp C_MUTE &kp AIRPODS_ANC &kp AIRPODS_TRANSPARENCY &kp C_BRI_DN &kp C_BRI_UP          &kp UNDER &kp PLUS  &kp LBRC  &kp RBRC &kp PIPE &kp TILDE
                              &kp LGUI &trans   &kp SPACE   &kp RET   &trans    &kp RALT
+                        >;
+                };
+
+                adjust_layer {
+                        display-name = "Adjust Layer";
+// Hold both Lower and Raise. Unassigned keys are blocked, not transparent.
+// BTCLR clears the selected keyboard profile's pairing; it does not disconnect AirPods.
+// -----------------------------------------------------------------------------------------
+// |      |     |     |     |     |     |   |     |     |     |     |     |      |
+// |      | BT1 | BT2 | BT3 | BT4 | BT5 |   |     |     |     |     |     |      |
+// |      | BTPR|BTCLR| BTNX|     |     |   |     |     |     |     |     |      |
+//                    |     | LWR |     |   |     | RSE |     |
+                        bindings = <
+   &none &none        &none        &none        &none        &none          &none &none &none &none &none &none
+   &none &bt BT_SEL 0 &bt BT_SEL 1 &bt BT_SEL 2 &bt BT_SEL 3 &bt BT_SEL 4   &none &none &none &none &none &none
+   &none &bt BT_PRV   &bt BT_CLR   &bt BT_NXT   &none        &none          &none &none &none &none &none &none
+                                       &none &trans &none                 &none &trans &none
                         >;
                 };
         };

@@ -1,0 +1,6 @@
+config ZMK_BEHAVIOR_SHIFT_SCROLL
+    bool
+    default y
+    depends on DT_HAS_ZMK_BEHAVIOR_SHIFT_SCROLL_ENABLED
+    depends on ZMK_POINTING
+    depends on !ZMK_SPLIT || ZMK_SPLIT_ROLE_CENTRAL

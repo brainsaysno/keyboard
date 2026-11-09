@@ -51,7 +51,8 @@ My [zmk](https://zmk.dev/) config for my wireless, low profile [corne](https://g
 ### Cool Tweaks
 
 - **Ctrl/Esc combo:** Hold for ctrl, tap for escape. This is my most used keymap by far, and it's nice to have it in the firmware so it works in iOS as well
-- **Mouse emulation:** Move cursor and right/left click from lower layer
+- **Mouse emulation:** Move cursor and right/left click from lower layer; Shift with mouse up/down scrolls
+- **Clipboard history:** Lower+C sends F18 to open Raycast Clipboard History through Karabiner
 - **Globe key:** For dictation with Wispr Flow
 - **Media and brightness controls:** On raise layer
 - **Bluetooth profiles:** Quick switching across 5 devices
@@ -62,8 +63,55 @@ My [zmk](https://zmk.dev/) config for my wireless, low profile [corne](https://g
 3x6 Corne split.
 
 - **Base:** QWERTY-ish
-- **Lower:** Numbers, arrow keys (vim hjkl), mouse emulation
-- **Raise:** Symbols, media, bluetooth, brightness controls
+- **Lower:** Numbers, arrow keys (vim hjkl), mouse movement/scrolling, clipboard history, direct Bluetooth profile selection
+- **Raise:** Symbols, media, AirPods hotkeys, brightness controls
+- **Adjust:** Bluetooth setup. Hold both Lower and Raise to activate it; release either to leave it.
+
+### Audio and AirPods keys
+
+Hold the right-thumb Raise key and press the physical key listed below:
+
+| Key | Action | Keycode |
+| --- | --- | --- |
+| Z | Output mute | `C_MUTE` |
+| X | AirPods ANC hotkey | `F19` |
+| C | AirPods Transparency hotkey | `F20` |
+| V | Brightness down | `C_BRI_DN` |
+| B | Brightness up | `C_BRI_UP` |
+
+The existing media controls on Raise+A/S/D/F/G are unchanged.
+
+**The AirPods hotkeys require Mac-side setup.** The firmware only sends `F19` and `F20`; it does not control AirPods directly. Bind these to actions that set Noise Cancellation and Transparency for the connected AirPods. That integration is not configured by this repository.
+
+### Bluetooth setup
+
+Hold both layer thumb keys to access Adjust:
+
+- A/S/D/F/G select Bluetooth profiles 1 through 5, matching the existing Lower shortcuts.
+- Z selects the previous profile; C selects the next profile.
+- X clears the selected keyboard profile's pairing. Use it only when re-pairing, not to disconnect a device.
+
+Other Adjust keys are disabled to prevent media or typing actions from falling through. Lower+A/S/D/F/G remain available for quick device switching without holding both thumbs.
+
+### Clipboard history and scrolling
+
+| Binding | Action |
+| --- | --- |
+| Lower+C | Send `F18` for Raycast Clipboard History |
+| Lower+M | Move mouse down |
+| Lower+comma | Move mouse up |
+| Lower+Shift+M | Scroll down |
+| Lower+Shift+comma | Scroll up |
+
+Hold Shift before pressing the mouse key. To switch between moving and scrolling, release the mouse key, change Shift, and press it again. Left/right mouse movement and the H/J/K/L arrow keys are unchanged, including Shift+arrows for selecting text. Scroll direction follows the host's mouse scrolling settings.
+
+The local `zmk,behavior-shift-scroll` behavior sends a keyboard modifier report before scrolling. Stock ZMK v0.3 mod-morph masks modifiers internally but does not itself send that report, and a mouse behavior does not send one either. The helper suppresses Shift during scrolling and restores it when the last scrolling key is released, preventing the host from interpreting vertical wheel events as Shift-scroll.
+
+For clipboard history, install [macos/clipboard-history.json](macos/clipboard-history.json) as a Karabiner complex modification and enable its rule. The rule reserves unmodified F18 globally and opens Raycast's built-in Clipboard History command; F19/F20 remain reserved for AirPods. Raycast may ask for confirmation when first opening the command through its deeplink. No clipboard retention settings are changed. Alternatively, assign F18 directly to Clipboard History in Raycast and leave this Karabiner rule disabled.
+
+### Local validation
+
+Run `python3 -m unittest discover -s tests -v` to check the keymap and the Shift-scroll helper's modifier and release behavior with a host C compiler. This is not a replacement for a full ZMK firmware build or on-device testing.
 
 ## Usage
 

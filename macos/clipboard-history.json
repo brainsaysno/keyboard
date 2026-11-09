@@ -1,0 +1,20 @@
+{
+  "title": "Corne clipboard history",
+  "rules": [
+    {
+      "description": "Corne: F18 opens Raycast Clipboard History",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": { "key_code": "f18" },
+          "to": [
+            {
+              "shell_command": "/usr/bin/open 'raycast://extensions/raycast/clipboard-history/clipboard-history'",
+              "repeat": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

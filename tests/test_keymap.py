@@ -40,7 +40,7 @@ class KeymapTests(unittest.TestCase):
 
     def test_existing_audio_and_bluetooth_bindings(self):
         self.assertEqual(self.layers["raise_layer"][25:30], [
-            ("kp", "C_MUTE"), ("kp", "AIRPODS_ANC"), ("kp", "AIRPODS_TRANSPARENCY"),
+            ("kp", "C_MUTE"), ("kp", "NOISE_CANCELLATION"), ("kp", "TRANSPARENCY"),
             ("kp", "C_BRI_DN"), ("kp", "C_BRI_UP")])
         for layer in ("lower_layer", "adjust_layer"):
             self.assertEqual(self.layers[layer][13:18], [("bt", "BT_SEL", str(i)) for i in range(5)])

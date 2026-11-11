@@ -64,18 +64,18 @@ My [zmk](https://zmk.dev/) config for my wireless, low profile [corne](https://g
 
 - **Base:** QWERTY-ish
 - **Lower:** Numbers, arrow keys (vim hjkl), mouse movement/scrolling, clipboard history, direct Bluetooth profile selection
-- **Raise:** Symbols, media, AirPods hotkeys, brightness controls
+- **Raise:** Symbols, media, headphone listening modes, brightness controls
 - **Adjust:** Bluetooth setup. Hold both Lower and Raise to activate it; release either to leave it.
 
-### Audio and AirPods keys
+### Audio and headphone keys
 
 Hold the right-thumb Raise key and press the physical key listed below:
 
 | Key | Action | Keycode |
 | --- | --- | --- |
 | Z | Output mute | `C_MUTE` |
-| X | AirPods ANC hotkey | `F19` |
-| C | AirPods Transparency hotkey | `F20` |
+| X | Headphones noise cancellation | `F19` |
+| C | Headphones transparency | `F20` |
 | V | Brightness down | `C_BRI_DN` |
 | B | Brightness up | `C_BRI_UP` |
 
@@ -111,10 +111,10 @@ The local `zmk,behavior-shift-scroll` behavior sends a keyboard modifier report 
 
 Raycast hotkeys handle the F-keys, so Karabiner-Elements is not needed. Karabiner leaves the Corne alone by default because it is both a keyboard and a pointing device.
 
-1. Build the AirPods helper and link its Raycast script commands into a Raycast script directory (here `~/.config/raycast/scripts`):
+1. Build the headphones helper and link its Raycast script commands into a Raycast script directory (here `~/.config/raycast/scripts`):
 
    ```sh
-   swiftc -O macos/airpods-mode.swift -o ~/.local/bin/airpods-mode
+   swiftc -O macos/headphones-mode.swift -o ~/.local/bin/headphones-mode
    ln -s "$PWD"/macos/raycast/*.sh ~/.config/raycast/scripts/
    ```
 
@@ -123,8 +123,8 @@ Raycast hotkeys handle the F-keys, so Karabiner-Elements is not needed. Karabine
    | Raycast command | Corne keys | Key sent |
    | --- | --- | --- |
    | Clipboard History | Lower+C | `F18` |
-   | AirPods Noise Cancellation | Raise+X | `F19` |
-   | AirPods Transparency | Raise+C | `F20` |
+   | Headphones Noise Cancellation | Raise+X | `F19` |
+   | Headphones Transparency | Raise+C | `F20` |
 
 3. Turn off macOS mouse-wheel acceleration, which otherwise makes a held scroll key start slowly and then race. This applies to every mouse:
 
@@ -132,7 +132,12 @@ Raycast hotkeys handle the F-keys, so Karabiner-Elements is not needed. Karabine
    defaults write -g com.apple.scrollwheel.scaling -float -1
    ```
 
-`airpods-mode` writes the listening mode straight to the AirPods' Core Audio device through its undocumented `lstm` property, as found by [pods-control](https://github.com/raulgg/pods-control). It needs no permissions and shows no UI. Being undocumented, the property could change in a future macOS release.
+`headphones-mode` switches every connected supported headphone at once:
+
+- **AirPods and Beats:** writes the listening mode to the headphones' Core Audio device through its undocumented `lstm` property, as found by [pods-control](https://github.com/raulgg/pods-control). Needs no permissions and shows no UI.
+- **Sony WH-1000XM5:** sends Sony's own control command over the Bluetooth channel the headphones publish for their phone app, as reverse-engineered by [SonyHeadphonesClient](https://github.com/Plutoberth/SonyHeadphonesClient). Transparency maps to Ambient Sound, keeping the current ambient level and voice focus. Other Sony models that use a different noise-control layout are reported as unsupported. Raycast needs Bluetooth permission for this.
+
+Both paths are undocumented, so a macOS or headphone firmware update could break them.
 
 ### Local validation
 

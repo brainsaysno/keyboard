@@ -52,7 +52,7 @@ My [zmk](https://zmk.dev/) config for my wireless, low profile [corne](https://g
 
 - **Ctrl/Esc combo:** Hold for ctrl, tap for escape. This is my most used keymap by far, and it's nice to have it in the firmware so it works in iOS as well
 - **Mouse emulation:** Move cursor and right/left click from lower layer; Shift with mouse up/down scrolls
-- **Clipboard history:** Lower+C sends F18 to open Raycast Clipboard History through Karabiner
+- **Clipboard history:** Lower+C sends F18, bound in Raycast to Clipboard History
 - **Globe key:** For dictation with Wispr Flow
 - **Media and brightness controls:** On raise layer
 - **Bluetooth profiles:** Quick switching across 5 devices
@@ -81,7 +81,7 @@ Hold the right-thumb Raise key and press the physical key listed below:
 
 The existing media controls on Raise+A/S/D/F/G are unchanged.
 
-**The AirPods hotkeys require Mac-side setup.** The firmware only sends `F19` and `F20`; it does not control AirPods directly. Bind these to actions that set Noise Cancellation and Transparency for the connected AirPods. That integration is not configured by this repository.
+The firmware only sends `F19` and `F20`; Raycast hotkeys turn them into listening-mode changes. See [Mac setup](#mac-setup).
 
 ### Bluetooth setup
 
@@ -107,7 +107,32 @@ Hold Shift before pressing the mouse key. To switch between moving and scrolling
 
 The local `zmk,behavior-shift-scroll` behavior sends a keyboard modifier report before scrolling. Stock ZMK v0.3 mod-morph masks modifiers internally but does not itself send that report, and a mouse behavior does not send one either. The helper suppresses Shift during scrolling and restores it when the last scrolling key is released, preventing the host from interpreting vertical wheel events as Shift-scroll.
 
-For clipboard history, install [macos/clipboard-history.json](macos/clipboard-history.json) as a Karabiner complex modification and enable its rule. The rule reserves unmodified F18 globally and opens Raycast's built-in Clipboard History command; F19/F20 remain reserved for AirPods. Raycast may ask for confirmation when first opening the command through its deeplink. No clipboard retention settings are changed. Alternatively, assign F18 directly to Clipboard History in Raycast and leave this Karabiner rule disabled.
+### Mac setup
+
+Raycast hotkeys handle the F-keys, so Karabiner-Elements is not needed. Karabiner leaves the Corne alone by default because it is both a keyboard and a pointing device.
+
+1. Build the AirPods helper and link its Raycast script commands into a Raycast script directory (here `~/.config/raycast/scripts`):
+
+   ```sh
+   swiftc -O macos/airpods-mode.swift -o ~/.local/bin/airpods-mode
+   ln -s "$PWD"/macos/raycast/*.sh ~/.config/raycast/scripts/
+   ```
+
+2. In Raycast Settings → Extensions, record these hotkeys by pressing the Corne keys:
+
+   | Raycast command | Corne keys | Key sent |
+   | --- | --- | --- |
+   | Clipboard History | Lower+C | `F18` |
+   | AirPods Noise Cancellation | Raise+X | `F19` |
+   | AirPods Transparency | Raise+C | `F20` |
+
+3. Turn off macOS mouse-wheel acceleration, which otherwise makes a held scroll key start slowly and then race. This applies to every mouse:
+
+   ```sh
+   defaults write -g com.apple.scrollwheel.scaling -float -1
+   ```
+
+macOS has no public API for AirPods listening modes, so `airpods-mode` clicks the mode in the menu bar's Sound menu through the Accessibility API, and the menu flashes briefly. It needs Raycast to have Accessibility permission and Sound set to always show in the menu bar (System Settings → Control Center). Ctrl+F2 (Move focus to the menu bar) must stay enabled: an auto-hidden menu bar ignores clicks until it has focus.
 
 ### Local validation
 

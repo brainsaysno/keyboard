@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 import re
 import shutil
@@ -48,14 +47,6 @@ class KeymapTests(unittest.TestCase):
         self.assertEqual(self.layers["adjust_layer"][25:28], [("bt", "BT_PRV"), ("bt", "BT_CLR"), ("bt", "BT_NXT")])
         self.assertIn("if-layers = <1 2>;", self.source)
         self.assertIn("then-layer = <3>;", self.source)
-
-    def test_karabiner_rule(self):
-        document = json.loads((ROOT / "macos/clipboard-history.json").read_text())
-        rule = document["rules"][0]["manipulators"][0]
-        self.assertEqual(rule["from"], {"key_code": "f18"})
-        self.assertFalse(rule["to"][0]["repeat"])
-        self.assertEqual(rule["to"][0]["shell_command"],
-                         "/usr/bin/open 'raycast://extensions/raycast/clipboard-history/clipboard-history'")
 
     def test_shift_scroll_c_behavior(self):
         compiler = shutil.which("cc")

@@ -132,7 +132,7 @@ Raycast hotkeys handle the F-keys, so Karabiner-Elements is not needed. Karabine
    defaults write -g com.apple.scrollwheel.scaling -float -1
    ```
 
-macOS has no public API for AirPods listening modes, so `airpods-mode` clicks the mode in the menu bar's Sound menu through the Accessibility API, and the menu flashes briefly. It needs Raycast to have Accessibility permission and Sound set to always show in the menu bar (System Settings → Control Center). Ctrl+F2 (Move focus to the menu bar) must stay enabled: an auto-hidden menu bar ignores clicks until it has focus.
+`airpods-mode` writes the listening mode straight to the AirPods' Core Audio device through its undocumented `lstm` property, as found by [pods-control](https://github.com/raulgg/pods-control). It needs no permissions and shows no UI. Being undocumented, the property could change in a future macOS release.
 
 ### Local validation
 

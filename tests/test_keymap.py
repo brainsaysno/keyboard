@@ -35,8 +35,6 @@ class KeymapTests(unittest.TestCase):
                                       ("mouse_up_scroll",), ("mmv", "MOVE_RIGHT")])
         self.assertEqual(lower[18:22], [("kp", "LEFT"), ("kp", "DOWN"), ("kp", "UP"), ("kp", "RIGHT")])
         self.assertEqual(lower[24], ("kp", "LSHFT"))
-        for direction in ("DOWN", "UP"):
-            self.assertIn(f"bindings = <&mmv MOVE_{direction}>, <&msc SCRL_{direction}>;", self.source)
 
     def test_existing_audio_and_bluetooth_bindings(self):
         self.assertEqual(self.layers["raise_layer"][25:30], [

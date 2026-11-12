@@ -103,7 +103,7 @@ Other Adjust keys are disabled to prevent media or typing actions from falling t
 | Lower+Shift+M | Scroll down |
 | Lower+Shift+comma | Scroll up |
 
-Hold Shift before pressing the mouse key. To switch between moving and scrolling, release the mouse key, change Shift, and press it again. Left/right mouse movement and the H/J/K/L arrow keys are unchanged, including Shift+arrows for selecting text. Scroll direction follows the host's mouse scrolling settings.
+Hold Shift before pressing the mouse key. To switch between moving and scrolling, release the mouse key, change Shift, and press it again. Left/right mouse movement and the H/J/K/L arrow keys are unchanged, including Shift+arrows for selecting text. The wheel directions are inverted so the page moves the way the key points with macOS natural scrolling on; with natural scrolling off, they are reversed.
 
 The local `zmk,behavior-shift-scroll` behavior sends a keyboard modifier report before scrolling. Stock ZMK v0.3 mod-morph masks modifiers internally but does not itself send that report, and a mouse behavior does not send one either. The helper suppresses Shift during scrolling and restores it when the last scrolling key is released, preventing the host from interpreting vertical wheel events as Shift-scroll.
 

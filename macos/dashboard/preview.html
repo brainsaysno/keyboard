@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Corne dashboard preview</title>
+<style>
+  :root { --ink: #1b1b1b; --paper: #cfd0c8; --line: #ddd; --muted: #666; }
+  body { font: 14px/1.45 -apple-system, BlinkMacSystemFont, sans-serif; margin: 24px; color: #222; background: #f6f6f2; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  p { margin: 0 0 14px; max-width: 900px; color: var(--muted); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .tile { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+  .tile h2 { font-size: 14px; margin: 0 0 8px; }
+  .screens { display: flex; gap: 12px; align-items: flex-start; }
+  canvas { image-rendering: pixelated; border: 6px solid #333; border-radius: 6px; background: var(--ink); }
+  textarea { width: 100%; max-width: 900px; height: 160px; font: 12px ui-monospace, Menlo, monospace; }
+  #error { color: #b00; font: 12px ui-monospace, Menlo, monospace; }
+</style>
+</head>
+<body>
+<h1>Corne dashboard preview</h1>
+<p>Renders <code>render.js</code> exactly as the Mac app streams it to the right-half nice!view (68 × 160, white on black), at 3× and actual size. Paste the output of <code>corne-dashboard --print-state</code> below to preview real data.</p>
+
+<textarea id="state" spellcheck="false" placeholder='{"wait": …, "meet": …, "review": …}'></textarea>
+<div id="error"></div>
+<div class="grid" id="tiles"></div>
+
+<script src="render.js"></script>
+<script>
+'use strict';
+const D = CorneDashboard;
+const PANEL = { 1: [0x1b, 0x1b, 0x1b], 0: [0xcf, 0xd0, 0xc8] };
+
+function paint(canvas, state, t) {
+  const bytes = D.render(state, t);
+  const ctx = canvas.getContext('2d');
+  const img = ctx.createImageData(D.W, D.H);
+  for (let y = 0; y < D.H; y++) {
+    for (let x = 0; x < D.W; x++) {
+      const black = bytes[y * D.STRIDE + (x >> 3)] & (0x80 >> (x & 7)) ? 1 : 0;
+      const i = (y * D.W + x) * 4;
+      [img.data[i], img.data[i + 1], img.data[i + 2]] = PANEL[black];
+      img.data[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+function screen(scale) {
+  const c = document.createElement('canvas');
+  c.width = D.W;
+  c.height = D.H;
+  c.style.width = `${D.W * scale}px`;
+  c.style.height = `${D.H * scale}px`;
+  return c;
+}
+
+const W0 = { ask: 0, err: 0, bell: 0 };
+const CALM_REVIEW = { count: 2, oldestMin: 300, mine: { ready: 2, inReview: 1, notAsked: 0 } };
+const BUSY_REVIEW = { count: 4, oldestMin: 2880, mine: { ready: 13, inReview: 2, notAsked: 5 } };
+const startedAt = Date.now() / 1000;
+const since = s => Math.floor(Date.now() / 1000 - startedAt) + s;
+
+// Each scenario returns a state; ones that use since() change every second.
+const SCENARIOS = [
+  ['Calm', () => ({ wait: W0, meet: { mode: 'next', title: 'Eng Weekly Priority Sync', minsTo: 40, start: 660, dur: 45, day: 0, then: 750 }, review: CALM_REVIEW })],
+  ['Needs you', () => ({ wait: { ask: 1, err: 1, bell: 3 }, meet: { mode: 'next', title: 'Eng Weekly Priority Sync', minsTo: 18, start: 660, dur: 45, day: 0, then: 750 }, review: BUSY_REVIEW })],
+  ['1:1 soon', () => ({ wait: { ask: 1, err: 0, bell: 0 }, meet: { mode: 'next', title: 'Gio / Nico - 1:1', minsTo: 7, start: 840, dur: 30, day: 0, then: 900 }, review: { count: 1, oldestMin: 12, mine: { ready: 0, inReview: 3, notAsked: 1 } } })],
+  ['Long title', () => ({ wait: { ask: 3, err: 1, bell: 8 }, meet: { mode: 'next', title: 'Customer + Product Sync', minsTo: 25, start: 630, dur: 30, day: 0, then: 660 }, review: { count: 12, oldestMin: 30240, mine: { ready: 1, inReview: 0, notAsked: 12 } } })],
+  ['Over an hour away', () => ({ wait: W0, meet: { mode: 'next', title: 'All-Hands', minsTo: 135, start: 990, dur: 60, day: 0, then: null }, review: { count: 0, oldestMin: 0, mine: { ready: 0, inReview: 0, notAsked: 0 } } })],
+  ['Tomorrow', () => ({ wait: { ask: 0, err: 0, bell: 3 }, meet: { mode: 'next', title: 'Germán / Nico - 1:1', minsTo: 900, start: 570, dur: 30, day: 1, dow: 'TUE' }, review: { count: 120, oldestMin: 2880, mine: { ready: 6, inReview: 4, notAsked: 2 } } })],
+  ['Free for days', () => ({ wait: W0, meet: { mode: 'none' }, review: { count: 3, oldestMin: 180, mine: { ready: 0, inReview: 2, notAsked: 0 } } })],
+  ['T-2 alert', () => ({ wait: { ask: 0, err: 0, bell: 1 }, meet: { mode: 'alert', title: 'Gio / Nico - 1:1', secsTo: Math.max(0, 120 - since(0) % 120), start: 840 }, review: CALM_REVIEW })],
+  ['ON AIR', () => ({ wait: { ask: 0, err: 0, bell: 1 }, meet: { mode: 'onair', title: 'Gio / Nico - 1:1', elapsed: since(754), start: 840, dur: 30, next: null }, review: CALM_REVIEW })],
+  ['Back-to-back', () => ({ wait: { ask: 1, err: 0, bell: 0 }, meet: { mode: 'onair', title: 'Eng Weekly Priority Sync', elapsed: since(2520), start: 660, dur: 45, next: 3 }, review: CALM_REVIEW })],
+  ['Running over', () => ({ wait: W0, meet: { mode: 'onair', title: 'Customer + Product Sync', elapsed: since(2040), start: 630, dur: 30, next: null }, review: CALM_REVIEW })],
+  ['Mic only', () => ({ wait: W0, meet: { mode: 'onair', title: null, elapsed: since(65), start: 0, dur: 0, next: null }, review: CALM_REVIEW })],
+  ['No data (firmware)', () => ({ stale: { mins: 7 } })],
+  ['Never connected (firmware)', () => ({ stale: { never: true } })],
+];
+
+const live = [];
+const tiles = document.getElementById('tiles');
+function addTile(name, stateFn) {
+  const tile = document.createElement('div');
+  tile.className = 'tile';
+  tile.innerHTML = `<h2></h2><div class="screens"></div>`;
+  tile.querySelector('h2').textContent = name;
+  const big = screen(3), small = screen(1);
+  tile.querySelector('.screens').append(big, small);
+  tiles.append(tile);
+  live.push({ stateFn, canvases: [big, small] });
+}
+
+const pasted = { state: null };
+addTile('Pasted state', () => pasted.state);
+SCENARIOS.forEach(([name, fn]) => addTile(name, fn));
+
+const errorEl = document.getElementById('error');
+document.getElementById('state').addEventListener('input', e => {
+  try {
+    pasted.state = e.target.value.trim() ? JSON.parse(e.target.value) : null;
+    errorEl.textContent = '';
+  } catch (err) {
+    errorEl.textContent = err.message;
+  }
+});
+
+function tick() {
+  const t = Date.now() / 1000;
+  for (const { stateFn, canvases } of live) {
+    const state = stateFn();
+    canvases[0].parentElement.parentElement.style.display = state ? '' : 'none';
+    if (state) for (const c of canvases) paint(c, state, t);
+  }
+}
+tick();
+setInterval(tick, 500);
+</script>
+</body>
+</html>

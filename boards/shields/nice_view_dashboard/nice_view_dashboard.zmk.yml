@@ -1,0 +1,9 @@
+file_format: "1"
+id: nice_view_dashboard
+name: nice!view work dashboard
+type: shield
+url: https://nicekeyboards.com/nice-view
+requires: [nice_view_header]
+features:
+  - display
+description: Shows the work dashboard the Mac app streams through the left half, or a "no data" screen while the Mac is silent

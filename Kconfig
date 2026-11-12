@@ -4,3 +4,15 @@ config ZMK_BEHAVIOR_SHIFT_SCROLL
     depends on DT_HAS_ZMK_BEHAVIOR_SHIFT_SCROLL_ENABLED
     depends on ZMK_POINTING
     depends on !ZMK_SPLIT || ZMK_SPLIT_ROLE_CENTRAL
+
+config ZMK_DASHBOARD_RELAY
+    bool "Relay the Mac dashboard app's frames to the split peripheral's display"
+    default y
+    depends on ZMK_SPLIT_BLE && ZMK_SPLIT_ROLE_CENTRAL
+
+config ZMK_DASHBOARD_DISPLAY
+    bool "Show the Mac dashboard app's frames on this split peripheral's display"
+    depends on ZMK_SPLIT_BLE && !ZMK_SPLIT_ROLE_CENTRAL
+    depends on ZMK_DISPLAY_STATUS_SCREEN_CUSTOM
+    select LV_USE_CANVAS
+    select CRC

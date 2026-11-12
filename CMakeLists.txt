@@ -1,3 +1,5 @@
 zephyr_library()
 zephyr_library_include_directories(${APPLICATION_SOURCE_DIR}/include)
 zephyr_library_sources_ifdef(CONFIG_ZMK_BEHAVIOR_SHIFT_SCROLL src/behavior_shift_scroll.c)
+zephyr_library_sources_ifdef(CONFIG_ZMK_DASHBOARD_RELAY src/dashboard_relay.c)
+zephyr_library_sources_ifdef(CONFIG_ZMK_DASHBOARD_DISPLAY src/dashboard_display.c src/dashboard_stale.c)

@@ -56,7 +56,7 @@ My [zmk](https://zmk.dev/) config for my wireless, low profile [corne](https://g
 - **Globe key:** For dictation with Wispr Flow
 - **Media and brightness controls:** On raise layer
 - **Bluetooth profiles:** Quick switching across 5 devices
-- **Cool art:** By [Hammerbeam](https://x.com/hammerbeam_tea), plugin by [@GPeye](https://github.com/GPeye/hammerbeam-slideshow). Keeping as a placeholder until I have some time to learn how to configure the display
+- **Work dashboard:** The right half's nice!view shows what's waiting on me: agent windows in tmux, the next meeting (or ON AIR while my mic is live), PRs to review, and my own PRs. A Mac app renders it and streams it to the keyboard
 
 ## Layout
 
@@ -139,9 +139,34 @@ Raycast hotkeys handle the F-keys, so Karabiner-Elements is not needed. Karabine
 
 Both paths are undocumented, so a macOS or headphone firmware update could break them.
 
+### Work dashboard
+
+`macos/dashboard/` holds `corne-dashboard`, a LaunchAgent that draws the right half's screen once a second. It streams the screen through the left half, which is the only half connected to the Mac:
+
+```mermaid
+flowchart LR
+  mac["corne-dashboard<br/>render.js → 68×160 frame"] -- "custom GATT service<br/>DATA / PRESENT writes" --> left["left half<br/>src/dashboard_relay.c"]
+  left -- "split link GATT client<br/>writes without response" --> right["right half nice!view<br/>src/dashboard_display.c"]
+```
+
+- **Top strip:** `tmux` windows in session `work` waiting on me: `?` an agent asked a question, `!` an agent hit an error, `●` a window rang the bell.
+- **Meeting band:** the next calendar event with a video link or another attendee (EventKit, next three days). Two minutes before it starts the band inverts and blinks. While any microphone is live it shows ON AIR with the elapsed time.
+- **TO REVIEW:** open `TeracAI/platform` PRs that request my review personally (team requests don't count), with the oldest request's age.
+- **MY PRS:** my open, non-draft `TeracAI/platform` PRs. READY is approved and mergeable, IN REVIEW has a person asked or a person's review, and NOT ASKED has only team requests or bot reviews.
+
+`macos/dashboard/render.js` is the only definition of the layout and copy, so a layout change needs no firmware flash. Open `macos/dashboard/preview.html` through a local web server to see every state. The keyboard draws one screen itself: after two minutes without a frame, or before the first one, it shows "NO DATA" (`src/dashboard_stale.c`).
+
+Install or update the app (it needs `gh` logged in with access to `TeracAI/platform`). render.js is compiled into the binary, so rerun this after changing it:
+
+```sh
+macos/dashboard/install.sh
+```
+
+The first run asks for Calendar and Bluetooth access. The log is `~/Library/Logs/corne-dashboard.log`. `corne-dashboard --print-state` prints the data it would draw, and `corne-dashboard --snapshot screen.png` writes the screen as an image; neither touches Bluetooth.
+
 ### Local validation
 
-Run `python3 -m unittest discover -s tests -v` to check the keymap and the Shift-scroll helper's modifier and release behavior with a host C compiler. This is not a replacement for a full ZMK firmware build or on-device testing.
+Run `python3 -m unittest discover -s tests -v` to check the keymap, the Shift-scroll helper's modifier and release behavior, the dashboard's "no data" screen against render.js, and the Mac app's PR, meeting, and frame-diff logic. The C and Swift tests need a host C compiler, `swiftc`, and `node`. This is not a replacement for a full ZMK firmware build or on-device testing.
 
 ## Usage
 

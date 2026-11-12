@@ -1,0 +1,11 @@
+description: Mouse movement, or scrolling while either Shift key is held
+
+compatible: "zmk,behavior-shift-scroll"
+
+include: zero_param.yaml
+
+properties:
+  bindings:
+    type: phandle-array
+    required: true
+    description: Mouse movement followed by mouse scrolling; both take one parameter

@@ -19,7 +19,7 @@
 </head>
 <body>
 <h1>Corne dashboard preview</h1>
-<p>Renders <code>render.js</code> exactly as the Mac app streams it to the right-half nice!view (68 × 160, white on black), at 3× and actual size. Paste the output of <code>corne-dashboard --print-state</code> below to preview real data.</p>
+<p>Renders <code>render.js</code> exactly as the Mac app streams it to the right-half nice!view (68 × 160, white on black), at 3× and actual size. Paste the output of <code>corne-dashboard --print-state</code> below, or put it in the URL after <code>#</code>, to preview real data.</p>
 
 <textarea id="state" spellcheck="false" placeholder='{"wait": …, "meet": …, "review": …}'></textarea>
 <div id="error"></div>
@@ -93,18 +93,23 @@ function addTile(name, stateFn) {
 }
 
 const pasted = { state: null };
-addTile('Pasted state', () => pasted.state);
+addTile('Your data', () => pasted.state);
 SCENARIOS.forEach(([name, fn]) => addTile(name, fn));
 
 const errorEl = document.getElementById('error');
-document.getElementById('state').addEventListener('input', e => {
+const stateEl = document.getElementById('state');
+stateEl.addEventListener('input', () => {
   try {
-    pasted.state = e.target.value.trim() ? JSON.parse(e.target.value) : null;
+    pasted.state = stateEl.value.trim() ? JSON.parse(stateEl.value) : null;
     errorEl.textContent = '';
   } catch (err) {
     errorEl.textContent = err.message;
   }
 });
+if (location.hash.length > 1) {
+  stateEl.value = decodeURIComponent(location.hash.slice(1));
+  stateEl.dispatchEvent(new Event('input'));
+}
 
 function tick() {
   const t = Date.now() / 1000;

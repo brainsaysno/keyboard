@@ -4,3 +4,18 @@ config ZMK_BEHAVIOR_SHIFT_SCROLL
     depends on DT_HAS_ZMK_BEHAVIOR_SHIFT_SCROLL_ENABLED
     depends on ZMK_POINTING
     depends on !ZMK_SPLIT || ZMK_SPLIT_ROLE_CENTRAL
+
+config ZMK_MAC_LINK
+    bool "Relay text from the Mac companion app to the split peripheral's display"
+    default y
+    depends on ZMK_SPLIT_BLE && ZMK_SPLIT_ROLE_CENTRAL
+
+config ZMK_MAC_LINK_DISPLAY
+    bool
+    default y
+    depends on DT_HAS_ZMK_BEHAVIOR_MAC_TEXT_ENABLED
+    depends on ZMK_DISPLAY
+    select LV_USE_CANVAS
+    select LV_FONT_MONTSERRAT_12
+    select LV_FONT_MONTSERRAT_14
+    select LV_FONT_MONTSERRAT_22

@@ -1,0 +1,5 @@
+description: Receives text slots relayed from the Mac companion app and shows them on the display
+
+compatible: "zmk,behavior-mac-text"
+
+include: zero_param.yaml

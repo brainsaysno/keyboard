@@ -1,0 +1,28 @@
+/*
+ * SPDX-License-Identifier: MIT
+ */
+
+&nice_view_spi {
+    status = "okay";
+    nice_view: ls0xx@0 {
+        compatible = "sharp,ls0xx";
+        spi-max-frequency = <1000000>;
+        reg = <0>;
+        width = <160>;
+        height = <68>;
+    };
+};
+
+/ {
+    chosen {
+        zephyr,display = &nice_view;
+    };
+
+    behaviors {
+        // The left half invokes this by name to deliver text from the Mac.
+        mac_txt: mac_txt {
+            compatible = "zmk,behavior-mac-text";
+            #binding-cells = <0>;
+        };
+    };
+};

@@ -68,11 +68,13 @@ const SCENARIOS = [
   ['Tomorrow', () => ({ wait: { ask: 0, err: 0, bell: 3 }, meet: { mode: 'next', title: 'Germán / Nico - 1:1', minsTo: 900, start: 570, dur: 30, day: 1, dow: 'TUE' }, review: { count: 120, oldestMin: 2880, mine: { ready: 6, inReview: 4, notAsked: 2 } } })],
   ['Free for days', () => ({ wait: W0, meet: { mode: 'none' }, review: { count: 3, oldestMin: 180, mine: { ready: 0, inReview: 2, notAsked: 0 } } })],
   ['T-2 alert', () => ({ wait: { ask: 0, err: 0, bell: 1 }, meet: { mode: 'alert', title: 'Gio / Nico - 1:1', minsTo: 2, start: 840 }, review: CALM_REVIEW })],
+  ['Long title alert', () => ({ wait: { ask: 1, err: 0, bell: 0 }, meet: { mode: 'alert', title: 'Customer + Product Sync', minsTo: 1, start: 840 }, review: CALM_REVIEW })],
   ['ON AIR', () => ({ wait: { ask: 0, err: 0, bell: 1 }, meet: { mode: 'onair', title: 'Gio / Nico - 1:1', elapsed: 12, start: 840, dur: 30, next: null }, review: CALM_REVIEW })],
   ['Back-to-back', () => ({ wait: { ask: 1, err: 0, bell: 0 }, meet: { mode: 'onair', title: 'Eng Weekly Priority Sync', elapsed: 42, start: 660, dur: 45, next: 3 }, review: CALM_REVIEW })],
   ['Running over', () => ({ wait: W0, meet: { mode: 'onair', title: 'Customer + Product Sync', elapsed: 34, start: 630, dur: 30, next: null }, review: CALM_REVIEW })],
   ['Over an hour', () => ({ wait: W0, meet: { mode: 'onair', title: 'All-Hands', elapsed: 65, start: 990, dur: 60, next: null }, review: CALM_REVIEW })],
   ['Mic only', () => ({ wait: W0, meet: { mode: 'onair', title: null, elapsed: 1, start: 0, dur: 0, next: null }, review: CALM_REVIEW })],
+  ['Overflow', () => ({ wait: { ask: 100, err: 2, bell: 3 }, meet: { mode: 'none' }, review: { count: 120, oldestMin: 10080, mine: { ready: 100, inReview: 123, notAsked: 99 } } })],
   ['No data (firmware)', () => ({ stale: { mins: 7 } })],
   ['Never connected (firmware)', () => ({ stale: { never: true } })],
 ];

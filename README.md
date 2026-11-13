@@ -149,10 +149,10 @@ flowchart LR
   left -- "split link GATT client<br/>writes without response" --> right["right half nice!view<br/>src/dashboard_display.c"]
 ```
 
-- **Top strip:** `tmux` windows in session `work` waiting on me: `?` an agent asked a question, `!` an agent hit an error, `●` a window rang the bell.
-- **Meeting band:** the next calendar event with a video link or another attendee (EventKit, next three days). Two minutes before it starts the band inverts. While any microphone is live it shows ON AIR with the minutes elapsed.
+- **Top strip:** how many `tmux` windows in session `work` are waiting on me (an agent asked a question or hit an error, or a window rang the bell). It inverts while an agent is asking or stuck.
+- **Meeting band:** the next calendar event with a video link or another attendee (EventKit, next three days): a countdown for today, the weekday for later. Two minutes before it starts the band inverts. While any microphone is live it shows ON AIR with the minutes elapsed.
 - **TO REVIEW:** open `TeracAI/platform` PRs that request my review personally (team requests don't count), with the oldest request's age.
-- **MY PRS:** my open, non-draft `TeracAI/platform` PRs. READY is approved and mergeable, IN REVIEW has a person asked or a person's review, and NOT ASKED has only team requests or bot reviews.
+- **MY PRS:** my open, non-draft `TeracAI/platform` PRs in three large counts. RDY is approved and mergeable, REV has a person asked or a person's review, and ASK has only team requests or bot reviews. RDY and ASK invert when above zero.
 
 `macos/dashboard/render.js` is the only definition of the layout and copy, so a layout change needs no firmware flash. Open `macos/dashboard/preview.html` through a local web server to see every state. The keyboard draws one screen itself: after two minutes without a frame, or before the first one, it shows "NO DATA" (`src/dashboard_stale.c`).
 

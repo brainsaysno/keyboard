@@ -23,7 +23,7 @@ console.log(JSON.stringify(states.map(state => {
       return value !== null && typeof value === 'object' ? watch(value, path + key + '.') : value;
     },
   });
-  const frame = globalThis.CorneDashboard.render(watch(state, ''), 1700000000);
+  const frame = globalThis.CorneDashboard.render(watch(state, ''));
   return {length: frame.length, bytes: frame.every(b => Number.isInteger(b) && b >= 0 && b <= 255), missing};
 })));
 """

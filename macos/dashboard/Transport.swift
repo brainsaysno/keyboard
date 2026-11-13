@@ -9,6 +9,9 @@ let dashboardCharacteristicUUID = CBUUID(string: "8F2A1C41-6D3B-4B8E-9C71-5E0A3B
 /// keyboard. Every callback and call happens on the main queue.
 final class Transport: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     private static let retryInterval: TimeInterval = 5
+    /// Pause between writes. Each one also crosses the split link, and back-to-back writes take
+    /// the radio time the keyboard needs for keystrokes, which made typing lag during a refresh.
+    private static let writeGap: TimeInterval = 0.05
     /// An attach that has not linked by then is cancelled and retried.
     private static let attachTimeout: TimeInterval = 15
 
@@ -31,6 +34,9 @@ final class Transport: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
 
     /// Linked, and every message of the previous frame has been written.
     var isIdle: Bool { characteristic != nil && !writing && queue.isEmpty }
+
+    /// The next frame goes out whole: after a (re)connect or a failed write.
+    var needsFrame: Bool { sync.needsFull }
 
     /// Sends what changed since the last frame; ignored unless `isIdle`, so a slow link drops
     /// frames instead of queueing them.
@@ -150,6 +156,6 @@ final class Transport: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
             return
         }
         lastProblem = nil
-        writeNext()
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.writeGap) { [weak self] in self?.writeNext() }
     }
 }

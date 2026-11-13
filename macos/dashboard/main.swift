@@ -50,6 +50,7 @@ final class Dashboard {
     private var review = Review()
     private var mic = MicDebounce()
     private var meetMode = ""
+    private var sentMinute = -1
     private var renderProblem: String?
     private var gitHubProblem: String?
 
@@ -67,7 +68,8 @@ final class Dashboard {
         }
         repeatEvery(60, on: calendarQueue) { [weak self] in self?.refreshCalendar() }
         repeatEvery(60, on: gitHubQueue) { [weak self] in self?.refreshReview() }
-        // Just after each second boundary, so countdowns change with the system clock.
+        // Each second for the microphone debounce, just after the boundary so a new minute is
+        // seen right away; tick() sends at most one frame a minute.
         let first = Date(timeIntervalSince1970: Date().timeIntervalSince1970.rounded(.down) + 1.02)
         let timer = Timer(fire: first, interval: 1, repeats: true) { [weak self] _ in self?.tick() }
         RunLoop.main.add(timer, forMode: .common)
@@ -123,9 +125,13 @@ final class Dashboard {
             meetMode = state.meet.mode
             log("Meeting band: \(meetMode)")
         }
-        guard transport.isIdle else { return }
+        // One refresh a minute: each refresh briefly takes the keyboard's radio away from typing.
+        // A (re)connect or failed write doesn't wait for the next minute.
+        let minute = Int(now.timeIntervalSince1970 / 60)
+        guard transport.isIdle, minute != sentMinute || transport.needsFrame else { return }
         do {
-            transport.send(try renderer.frame(state, time: now.timeIntervalSince1970))
+            transport.send(try renderer.frame(state))
+            sentMinute = minute
             renderProblem = nil
         } catch {
             let problem = "\(error)"
@@ -161,7 +167,7 @@ case ("--snapshot", 2):
     let renderer = loadRenderer()
     let state = collectOnce()
     do {
-        try writeSnapshot(renderer.frame(state, time: Date().timeIntervalSince1970), to: URL(fileURLWithPath: arguments[1]))
+        try writeSnapshot(renderer.frame(state), to: URL(fileURLWithPath: arguments[1]))
     } catch {
         log("Snapshot failed: \(error)")
         exit(1)

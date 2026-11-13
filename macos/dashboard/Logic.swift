@@ -87,17 +87,19 @@ func presentMessage(_ frame: [UInt8]) -> [UInt8] {
     return [MessageType.present.rawValue, UInt8(crc & 0xFF), UInt8(crc >> 8)]
 }
 
-/// Decides what to send for each rendered frame. The keyboard ignores a PRESENT whose CRC does
-/// not match its back buffer, so lost DATA only heals with the periodic full frame.
+/// Decides what to send for each rendered frame. Frames go out at most once a minute, so every
+/// call ends with a PRESENT, which is also the heartbeat: the right half shows "no data" after
+/// 120 s without one. The keyboard ignores a PRESENT whose CRC does not match its back buffer, so
+/// DATA lost without the left half noticing only heals with the occasional full frame.
 struct FrameSync {
-    static let fullInterval: TimeInterval = 60
-    /// The right half shows "no data" after 120 s without a matching PRESENT.
-    static let heartbeatInterval: TimeInterval = 30
+    static let fullInterval: TimeInterval = 600
 
     /// The frame the keyboard shows once every message handed out so far has arrived.
     private var shown: [UInt8]?
     private var lastFull: TimeInterval = 0
-    private var lastPresent: TimeInterval = 0
+
+    /// The next send is the whole frame, and should go out without waiting for the minute.
+    var needsFull: Bool { shown == nil }
 
     /// Makes the next send the whole frame: after a (re)connect or a failed write.
     mutating func invalidate() {
@@ -110,15 +112,11 @@ struct FrameSync {
         let ranges: [Range<Int>]
         if let shown, now - lastFull < Self.fullInterval {
             ranges = changedRanges(from: shown, to: frame)
-            if ranges.isEmpty, now - lastPresent < Self.heartbeatInterval {
-                return []
-            }
         } else {
             ranges = [0..<frameSize]
             lastFull = now
         }
         shown = frame
-        lastPresent = now
         return dataMessages(frame, ranges: ranges, payload: payload) + [presentMessage(frame)]
     }
 }
@@ -342,10 +340,11 @@ struct Meeting: Equatable {
 }
 
 /// The "meet" object render.js draws. `start`/`then` are minutes after local midnight of the
-/// meeting's own day; `dur`/`minsTo`/`next` minutes; `secsTo`/`elapsed` seconds.
+/// meeting's own day; `dur`/`minsTo`/`next`/`elapsed` are minutes, since the screen refreshes once
+/// a minute.
 enum MeetState: Equatable {
     case noMeeting
-    case alert(title: String?, secsTo: Int, start: Int)
+    case alert(title: String?, minsTo: Int, start: Int)
     case next(title: String?, minsTo: Int, start: Int, dur: Int, day: Int, dow: String, then: Int?)
     case onair(title: String?, elapsed: Int, start: Int, dur: Int, next: Int?)
 
@@ -361,7 +360,7 @@ enum MeetState: Equatable {
 
 extension MeetState: Encodable {
     private enum Key: String, CodingKey {
-        case mode, title, secsTo, minsTo, start, dur, day, dow, then, elapsed, next
+        case mode, title, minsTo, start, dur, day, dow, then, elapsed, next
     }
 
     // Optionals are encoded explicitly so render.js sees null rather than a missing key.
@@ -371,9 +370,9 @@ extension MeetState: Encodable {
         switch self {
         case .noMeeting:
             break
-        case let .alert(title, secsTo, start):
+        case let .alert(title, minsTo, start):
             try container.encode(title, forKey: .title)
-            try container.encode(secsTo, forKey: .secsTo)
+            try container.encode(minsTo, forKey: .minsTo)
             try container.encode(start, forKey: .start)
         case let .next(title, minsTo, start, dur, day, dow, then):
             try container.encode(title, forKey: .title)
@@ -417,17 +416,16 @@ func meetState(_ meetings: [Meeting], micLiveSince: Date?, now: Date, calendar: 
         // The latest-started meeting still running when the mic went live. It stays the title
         // past its scheduled end while the mic is live, so render.js can show "+N OVER".
         if let current = sorted.last(where: { $0.start <= now && $0.end > liveSince }) {
-            return .onair(title: current.title, elapsed: Int(now.timeIntervalSince(current.start)),
+            return .onair(title: current.title, elapsed: Int(now.timeIntervalSince(current.start) / 60),
                           start: minuteOfDay(current.start), dur: durationMinutes(current), next: next)
         }
-        return .onair(title: nil, elapsed: max(0, Int(now.timeIntervalSince(liveSince))),
+        return .onair(title: nil, elapsed: max(0, Int(now.timeIntervalSince(liveSince) / 60)),
                       start: minuteOfDay(liveSince), dur: 0, next: next)
     }
 
     guard let first = upcoming.first else { return .noMeeting }
-    let secondsTo = first.start.timeIntervalSince(now)
-    if secondsTo <= alertLead {
-        return .alert(title: first.title, secsTo: Int(secondsTo.rounded(.up)), start: minuteOfDay(first.start))
+    if first.start.timeIntervalSince(now) <= alertLead {
+        return .alert(title: first.title, minsTo: minutesUntil(first.start), start: minuteOfDay(first.start))
     }
     let day = calendar.dateComponents([.day], from: calendar.startOfDay(for: now),
                                       to: calendar.startOfDay(for: first.start)).day ?? 0

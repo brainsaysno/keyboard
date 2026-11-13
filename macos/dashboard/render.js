@@ -7,6 +7,9 @@
 // Screen: 68 x 160 px portrait, 1-bit, white on black. Drawing below uses ink = 1 (the light
 // foreground); pack() turns that into panel pixels (1 = black).
 //
+// The Mac sends at most one frame a minute, because every refresh briefly takes the keyboard's
+// radio away from typing. Nothing here may change by the second (no seconds, no blinking).
+//
 // The firmware draws only the "no data" screen itself (src/dashboard_display.c), because it
 // has to appear when the Mac app is not running; renderStale() here is its reference.
 
@@ -110,14 +113,11 @@
   const withOneOnOne = (st, max) => st.one && st.label.length + 4 <= max ? st.label + ' 1:1' : st.label;
   const hm = m => { const x = ((Math.floor(m) % 1440) + 1440) % 1440; return `${Math.floor(x / 60)}:${String(x % 60).padStart(2, '0')}`; };
   const span = (start, dur) => `${hm(start)}-${hm(start + dur)}`;
-  const mmss = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-  const elapsedLbl = s => s < 3600 ? mmss(s) : `${Math.floor(s / 3600)}H${String(Math.floor(s / 60) % 60).padStart(2, '0')}M`;
+  const elapsedLbl = min => min < 60 ? `${min}M` : `${Math.floor(min / 60)}H${String(min % 60).padStart(2, '0')}M`;
   const countdownLbl = mins => mins < 60 ? `${mins}M` : mins < 600 ? `${Math.floor(mins / 60)}H${String(mins % 60).padStart(2, '0')}` : `${Math.floor(mins / 60)}H`;
   const ageLbl = min => min < 60 ? `${min}M` : min < 1440 ? `${Math.floor(min / 60)}H` : min < 10080 ? `${Math.floor(min / 1440)}D` : `${Math.floor(min / 10080)}W`;
   const cap99 = n => n > 99 ? '99+' : String(n);
   const thenLbl = m => m.day === 0 ? (m.then != null ? 'THEN ' + hm(m.then) : 'LAST TODAY') : m.day === 1 ? 'TOMORROW' : `IN ${m.day} DAYS`;
-  // The Mac sends a frame each second while something blinks, so blink by whole seconds.
-  const blink = t => Math.floor(t) % 2 === 0;
 
   // Breakdown beside the waiting total: spaced, unspaced, without the settled count, nothing.
   function waitBreakFit(fb, w, maxW) {
@@ -155,8 +155,7 @@
     fb.ctext(37, label, { v: 0 });
   }
 
-  function meetingBand(fb, m, t) {
-    const on = blink(t);
+  function meetingBand(fb, m) {
     if (m.mode === 'next') {
       const st = shortTitle(m.title, BESIDE_ICON);
       fb.bmp(0, 14, CAL);
@@ -173,10 +172,10 @@
     } else if (m.mode === 'alert') {
       const st = shortTitle(m.title, BESIDE_ICON);
       fb.fill(0, 11, 68, 75);
-      if (on) fb.rect(1, 12, 66, 73, 0);
+      fb.rect(1, 12, 66, 73, 0);
       fb.ctext(15, st.one ? '1:1 WITH' : 'STARTING', { v: 0 });
       alertTitle(fb, st.label);
-      fb.ctext(59, mmss(m.secsTo), { s: 2, v: 0 });
+      fb.ctext(59, `IN ${m.minsTo}M`, { s: 2, v: 0 });
       fb.ctext(76, 'AT ' + hm(m.start), { v: 0 });
     } else { // onair: driven by the microphone; the calendar only supplies title and end time
       fb.fill(0, 11, 68, 75);
@@ -185,14 +184,15 @@
       fb.ctext(53, withOneOnOne(shortTitle(m.title, LINE), LINE), { v: 0 });
       if (m.next != null && m.next <= 10) {
         const s = `NEXT IN ${m.next}M`, w = fb.textW(s), x = Math.floor((W - w) / 2);
-        if (m.next > 2 || on) { fb.fill(x - 1, 62, w + 2, 9, 0); fb.text(x, 63, s); } else fb.text(x, 63, s, { v: 0 });
+        fb.fill(x - 1, 62, w + 2, 9, 0);
+        fb.text(x, 63, s);
       } else if (m.title != null) {
-        const over = Math.floor(m.elapsed / 60) - m.dur;
+        const over = m.elapsed - m.dur;
         fb.ctext(63, over > 0 ? `+${over}M OVER` : 'TO ' + hm(m.start + m.dur), { v: 0 });
       }
       if (m.title != null) {
         fb.rect(4, 75, 60, 5, 0);
-        fb.fill(5, 76, Math.round(58 * Math.min(1, m.elapsed / (m.dur * 60))), 3, 0);
+        fb.fill(5, 76, Math.round(58 * Math.min(1, m.elapsed / m.dur)), 3, 0);
       }
     }
   }
@@ -246,13 +246,13 @@
     }
   }
 
-  function draw(state, t) {
+  function draw(state) {
     const fb = new FB();
     if (state.stale) renderStale(fb, state.stale);
     else {
       strip(fb, state.wait);
       fb.hline(0, 67, 10);
-      meetingBand(fb, state.meet, t);
+      meetingBand(fb, state.meet);
       fb.hline(0, 67, 86);
       reviewBand(fb, state.review);
     }
@@ -274,11 +274,11 @@
   global.CorneDashboard = {
     W, H, STRIDE, FONT, CAL,
     draw,
-    // state: object or JSON string; t: Unix seconds (drives blinking). Returns a plain array
-    // so JavaScriptCore hands Swift an array of numbers.
-    render(state, t) {
+    // state: object or JSON string. Returns a plain array so JavaScriptCore hands Swift an array
+    // of numbers.
+    render(state) {
       const s = typeof state === 'string' ? JSON.parse(state) : state;
-      return Array.from(pack(draw(s, t)));
+      return Array.from(pack(draw(s)));
     },
   };
 })(globalThis);

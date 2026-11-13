@@ -24,9 +24,9 @@ final class Renderer {
         self.dashboard = dashboard
     }
 
-    /// The packed 1440-byte frame for `state` at Unix time `time` (which drives blinking).
-    func frame(_ state: DashboardState, time: TimeInterval) throws -> [UInt8] {
-        let result = dashboard.invokeMethod("render", withArguments: [state.json, time])
+    /// The packed 1440-byte frame for `state`.
+    func frame(_ state: DashboardState) throws -> [UInt8] {
+        let result = dashboard.invokeMethod("render", withArguments: [state.json])
         try Self.check(context, "rendering")
         let values = result?.toArray() ?? []
         let bytes = values.compactMap { ($0 as? NSNumber).map(\.intValue) }.filter { (0...255).contains($0) }

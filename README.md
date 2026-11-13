@@ -141,7 +141,7 @@ Both paths are undocumented, so a macOS or headphone firmware update could break
 
 ### Work dashboard
 
-`macos/dashboard/` holds `corne-dashboard`, a LaunchAgent that draws the right half's screen once a second. It streams the screen through the left half, which is the only half connected to the Mac:
+`macos/dashboard/` holds `corne-dashboard`, a LaunchAgent that redraws the right half's screen once a minute, sending only what changed. Every refresh briefly takes the keyboard's radio away from typing, so the screen shows minutes, never seconds. It streams the screen through the left half, which is the only half connected to the Mac:
 
 ```mermaid
 flowchart LR
@@ -150,7 +150,7 @@ flowchart LR
 ```
 
 - **Top strip:** `tmux` windows in session `work` waiting on me: `?` an agent asked a question, `!` an agent hit an error, `●` a window rang the bell.
-- **Meeting band:** the next calendar event with a video link or another attendee (EventKit, next three days). Two minutes before it starts the band inverts and blinks. While any microphone is live it shows ON AIR with the elapsed time.
+- **Meeting band:** the next calendar event with a video link or another attendee (EventKit, next three days). Two minutes before it starts the band inverts. While any microphone is live it shows ON AIR with the minutes elapsed.
 - **TO REVIEW:** open `TeracAI/platform` PRs that request my review personally (team requests don't count), with the oldest request's age.
 - **MY PRS:** my open, non-draft `TeracAI/platform` PRs. READY is approved and mergeable, IN REVIEW has a person asked or a person's review, and NOT ASKED has only team requests or bot reviews.
 

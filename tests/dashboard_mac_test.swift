@@ -50,18 +50,20 @@ enum DashboardMacTest {
         expect(presentMessage(ends), [0x02, UInt8(endsCRC & 0xFF), UInt8(endsCRC >> 8)], "PRESENT carries the CRC")
 
         var sync = FrameSync()
+        expect(sync.needsFull, true, "nothing sent yet: send at once")
         let first = sync.messages(for: white, now: 1000, payload: 59)
         expect(first.count, 26, "first frame is sent whole")
         expect(first.last, presentMessage(white), "frame ends with PRESENT")
-        expect(sync.messages(for: white, now: 1001, payload: 59), [], "nothing sent for an unchanged frame")
-        expect(sync.messages(for: white, now: 1029.9, payload: 59), [], "no heartbeat before 30 s")
-        expect(sync.messages(for: white, now: 1030, payload: 59), [presentMessage(white)], "heartbeat PRESENT at 30 s")
-        expect(sync.messages(for: ends, now: 1031, payload: 59),
+        expect(sync.needsFull, false, "after a send: wait for the minute")
+        expect(sync.messages(for: white, now: 1060, payload: 59), [presentMessage(white)],
+               "unchanged frame: PRESENT only, as the heartbeat")
+        expect(sync.messages(for: ends, now: 1120, payload: 59),
                [[0x01, 0x00, 0x00, 0x00], [0x01, 0x9F, 0x05, 0x00], presentMessage(ends)], "only changed bytes")
-        expect(sync.messages(for: ends, now: 1059, payload: 59), [], "unchanged after a diff")
-        expect(sync.messages(for: ends, now: 1060, payload: 59).count, 26, "full frame every 60 s")
+        expect(sync.messages(for: ends, now: 1599.9, payload: 59), [presentMessage(ends)], "no full frame before 600 s")
+        expect(sync.messages(for: ends, now: 1600, payload: 59).count, 26, "full frame every 600 s")
         sync.invalidate()
-        expect(sync.messages(for: ends, now: 1061, payload: 59).count, 26, "full frame after a failed write")
+        expect(sync.needsFull, true, "after a failed write: send at once")
+        expect(sync.messages(for: ends, now: 1601, payload: 59).count, 26, "full frame after a failed write")
 
         // MARK: Waiting windows
 
@@ -175,9 +177,9 @@ enum DashboardMacTest {
         expect(mode(day, at(10, 13, 57, 59)),
                .next(title: "Gio / Nico - 1:1", minsTo: 3, start: 840, dur: 30, day: 0, dow: "TUE", then: 900),
                "121 s before: still next")
-        expect(mode(day, at(10, 13, 58)), .alert(title: "Gio / Nico - 1:1", secsTo: 120, start: 840), "120 s before: alert")
-        expect(mode(day, at(10, 13, 59, 59.5)), .alert(title: "Gio / Nico - 1:1", secsTo: 1, start: 840),
-               "seconds round up")
+        expect(mode(day, at(10, 13, 58)), .alert(title: "Gio / Nico - 1:1", minsTo: 2, start: 840), "120 s before: alert")
+        expect(mode(day, at(10, 13, 59, 0.5)), .alert(title: "Gio / Nico - 1:1", minsTo: 1, start: 840),
+               "alert minutes round up")
         expect(mode(day, at(10, 14, 0)),
                .next(title: "Eng Weekly Priority Sync", minsTo: 60, start: 900, dur: 30, day: 0, dow: "TUE", then: nil),
                "a started meeting without the mic gives way to the next")
@@ -187,17 +189,18 @@ enum DashboardMacTest {
                .next(title: "Fri", minsTo: 4319, start: 832, dur: 30, day: 3, dow: "FRI", then: nil), "within 3 days")
         expect(mode([meeting("Fri", at(13, 13, 54), minutes: 30)], at(10, 13, 53)), .noMeeting, "beyond 3 days")
 
-        expect(mode(day, at(10, 14, 5, 30), live: at(10, 13, 58)),
-               .onair(title: "Gio / Nico - 1:1", elapsed: 330, start: 840, dur: 30, next: 55), "on air in a meeting")
+        expect(mode(day, at(10, 14, 5, 59), live: at(10, 13, 58)),
+               .onair(title: "Gio / Nico - 1:1", elapsed: 5, start: 840, dur: 30, next: 55),
+               "on air in a meeting; elapsed minutes round down")
         expect(mode(day, at(10, 13, 59), live: at(10, 13, 58)),
-               .onair(title: nil, elapsed: 60, start: 838, dur: 0, next: 1), "on air before the meeting starts")
+               .onair(title: nil, elapsed: 1, start: 838, dur: 0, next: 1), "on air before the meeting starts")
         expect(mode(day, at(10, 14, 40), live: at(10, 13, 58)),
-               .onair(title: "Gio / Nico - 1:1", elapsed: 2400, start: 840, dur: 30, next: 20), "meeting running over")
+               .onair(title: "Gio / Nico - 1:1", elapsed: 40, start: 840, dur: 30, next: 20), "meeting running over")
         expect(mode(day, at(10, 15, 2), live: at(10, 13, 58)),
-               .onair(title: "Eng Weekly Priority Sync", elapsed: 120, start: 900, dur: 30, next: nil),
+               .onair(title: "Eng Weekly Priority Sync", elapsed: 2, start: 900, dur: 30, next: nil),
                "back-to-back: the latest meeting")
         expect(mode(day, at(10, 14, 32), live: at(10, 14, 31)),
-               .onair(title: nil, elapsed: 60, start: 871, dur: 0, next: 28), "meeting ended before the mic went live")
+               .onair(title: nil, elapsed: 1, start: 871, dur: 0, next: 28), "meeting ended before the mic went live")
 
         // MARK: Microphone
 

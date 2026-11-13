@@ -19,7 +19,7 @@ def reference_frames(states):
         raise AssertionError("node is required to run render.js")
     script = (f"require({json.dumps(str(RENDER_JS))});"
               f"const states = {json.dumps(states)};"
-              "process.stdout.write(JSON.stringify(states.map(s => CorneDashboard.render(s, 0))));")
+              "process.stdout.write(JSON.stringify(states.map(s => CorneDashboard.render(s))));")
     output = subprocess.run([node, "-e", script], check=True, capture_output=True, text=True).stdout
     return [bytes(frame) for frame in json.loads(output)]
 

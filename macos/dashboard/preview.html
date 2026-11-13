@@ -31,8 +31,8 @@
 const D = CorneDashboard;
 const PANEL = { 1: [0x1b, 0x1b, 0x1b], 0: [0xcf, 0xd0, 0xc8] };
 
-function paint(canvas, state, t) {
-  const bytes = D.render(state, t);
+function paint(canvas, state) {
+  const bytes = D.render(state);
   const ctx = canvas.getContext('2d');
   const img = ctx.createImageData(D.W, D.H);
   for (let y = 0; y < D.H; y++) {
@@ -58,10 +58,7 @@ function screen(scale) {
 const W0 = { ask: 0, err: 0, bell: 0 };
 const CALM_REVIEW = { count: 2, oldestMin: 300, mine: { ready: 2, inReview: 1, notAsked: 0 } };
 const BUSY_REVIEW = { count: 4, oldestMin: 2880, mine: { ready: 13, inReview: 2, notAsked: 5 } };
-const startedAt = Date.now() / 1000;
-const since = s => Math.floor(Date.now() / 1000 - startedAt) + s;
-
-// Each scenario returns a state; ones that use since() change every second.
+// Static states: the keyboard only refreshes once a minute, so nothing here changes by the second.
 const SCENARIOS = [
   ['Calm', () => ({ wait: W0, meet: { mode: 'next', title: 'Eng Weekly Priority Sync', minsTo: 40, start: 660, dur: 45, day: 0, then: 750 }, review: CALM_REVIEW })],
   ['Needs you', () => ({ wait: { ask: 1, err: 1, bell: 3 }, meet: { mode: 'next', title: 'Eng Weekly Priority Sync', minsTo: 18, start: 660, dur: 45, day: 0, then: 750 }, review: BUSY_REVIEW })],
@@ -70,11 +67,12 @@ const SCENARIOS = [
   ['Over an hour away', () => ({ wait: W0, meet: { mode: 'next', title: 'All-Hands', minsTo: 135, start: 990, dur: 60, day: 0, then: null }, review: { count: 0, oldestMin: 0, mine: { ready: 0, inReview: 0, notAsked: 0 } } })],
   ['Tomorrow', () => ({ wait: { ask: 0, err: 0, bell: 3 }, meet: { mode: 'next', title: 'Germán / Nico - 1:1', minsTo: 900, start: 570, dur: 30, day: 1, dow: 'TUE' }, review: { count: 120, oldestMin: 2880, mine: { ready: 6, inReview: 4, notAsked: 2 } } })],
   ['Free for days', () => ({ wait: W0, meet: { mode: 'none' }, review: { count: 3, oldestMin: 180, mine: { ready: 0, inReview: 2, notAsked: 0 } } })],
-  ['T-2 alert', () => ({ wait: { ask: 0, err: 0, bell: 1 }, meet: { mode: 'alert', title: 'Gio / Nico - 1:1', secsTo: Math.max(0, 120 - since(0) % 120), start: 840 }, review: CALM_REVIEW })],
-  ['ON AIR', () => ({ wait: { ask: 0, err: 0, bell: 1 }, meet: { mode: 'onair', title: 'Gio / Nico - 1:1', elapsed: since(754), start: 840, dur: 30, next: null }, review: CALM_REVIEW })],
-  ['Back-to-back', () => ({ wait: { ask: 1, err: 0, bell: 0 }, meet: { mode: 'onair', title: 'Eng Weekly Priority Sync', elapsed: since(2520), start: 660, dur: 45, next: 3 }, review: CALM_REVIEW })],
-  ['Running over', () => ({ wait: W0, meet: { mode: 'onair', title: 'Customer + Product Sync', elapsed: since(2040), start: 630, dur: 30, next: null }, review: CALM_REVIEW })],
-  ['Mic only', () => ({ wait: W0, meet: { mode: 'onair', title: null, elapsed: since(65), start: 0, dur: 0, next: null }, review: CALM_REVIEW })],
+  ['T-2 alert', () => ({ wait: { ask: 0, err: 0, bell: 1 }, meet: { mode: 'alert', title: 'Gio / Nico - 1:1', minsTo: 2, start: 840 }, review: CALM_REVIEW })],
+  ['ON AIR', () => ({ wait: { ask: 0, err: 0, bell: 1 }, meet: { mode: 'onair', title: 'Gio / Nico - 1:1', elapsed: 12, start: 840, dur: 30, next: null }, review: CALM_REVIEW })],
+  ['Back-to-back', () => ({ wait: { ask: 1, err: 0, bell: 0 }, meet: { mode: 'onair', title: 'Eng Weekly Priority Sync', elapsed: 42, start: 660, dur: 45, next: 3 }, review: CALM_REVIEW })],
+  ['Running over', () => ({ wait: W0, meet: { mode: 'onair', title: 'Customer + Product Sync', elapsed: 34, start: 630, dur: 30, next: null }, review: CALM_REVIEW })],
+  ['Over an hour', () => ({ wait: W0, meet: { mode: 'onair', title: 'All-Hands', elapsed: 65, start: 990, dur: 60, next: null }, review: CALM_REVIEW })],
+  ['Mic only', () => ({ wait: W0, meet: { mode: 'onair', title: null, elapsed: 1, start: 0, dur: 0, next: null }, review: CALM_REVIEW })],
   ['No data (firmware)', () => ({ stale: { mins: 7 } })],
   ['Never connected (firmware)', () => ({ stale: { never: true } })],
 ];
@@ -105,22 +103,18 @@ stateEl.addEventListener('input', () => {
   } catch (err) {
     errorEl.textContent = err.message;
   }
+  paintAll();
 });
-if (location.hash.length > 1) {
-  stateEl.value = decodeURIComponent(location.hash.slice(1));
-  stateEl.dispatchEvent(new Event('input'));
-}
 
-function tick() {
-  const t = Date.now() / 1000;
+function paintAll() {
   for (const { stateFn, canvases } of live) {
     const state = stateFn();
     canvases[0].parentElement.parentElement.style.display = state ? '' : 'none';
-    if (state) for (const c of canvases) paint(c, state, t);
+    if (state) for (const c of canvases) paint(c, state);
   }
 }
-tick();
-setInterval(tick, 500);
+if (location.hash.length > 1) stateEl.value = decodeURIComponent(location.hash.slice(1));
+stateEl.dispatchEvent(new Event('input'));
 </script>
 </body>
 </html>

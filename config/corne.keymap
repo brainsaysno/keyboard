@@ -18,8 +18,9 @@
 #define CLIPBOARD_HISTORY F18
 
 / {
-        // The wheel directions are swapped so that, with macOS natural scrolling on (it is shared
-        // with the trackpad), M scrolls the page down and comma scrolls it up.
+        // The wheel directions are swapped on both axes so that, with macOS natural scrolling on
+        // (it is shared with the trackpad), N, M, comma and period scroll the page left, down, up
+        // and right.
         behaviors {
                 mouse_down_scroll: mouse_down_scroll {
                         compatible = "zmk,behavior-shift-scroll";
@@ -31,6 +32,18 @@
                         compatible = "zmk,behavior-shift-scroll";
                         #binding-cells = <0>;
                         bindings = <&mmv MOVE_UP>, <&msc SCRL_DOWN>;
+                };
+
+                mouse_left_scroll: mouse_left_scroll {
+                        compatible = "zmk,behavior-shift-scroll";
+                        #binding-cells = <0>;
+                        bindings = <&mmv MOVE_LEFT>, <&msc SCRL_RIGHT>;
+                };
+
+                mouse_right_scroll: mouse_right_scroll {
+                        compatible = "zmk,behavior-shift-scroll";
+                        #binding-cells = <0>;
+                        bindings = <&mmv MOVE_RIGHT>, <&msc SCRL_LEFT>;
                 };
         };
 
@@ -67,11 +80,11 @@
 // |  ⭐  | BT1 | BT2 | BT3 | BT4 | BT5 |   | LFT | DWN |  UP | RGT |     |      |
 // | SHFT |     |     | CLIP|     |     |   | MS< | MSD | MSU | MS> |     |      |
 //                    | GUI |     | SPC |   |LCLICK|     | RCLICK |
-// Hold Shift before M or comma to scroll down or up instead of moving the mouse.
+// Hold Shift before N, M, comma or period to scroll instead of moving the mouse.
                         bindings = <
    &kp TAB   &kp N1       &kp N2       &kp N3       &kp N4       &kp N5         &kp N6   &kp N7   &kp N8 &kp N9    &kp N0 &kp BSPC
    &trans    &bt BT_SEL 0 &bt BT_SEL 1 &bt BT_SEL 2 &bt BT_SEL 3 &bt BT_SEL 4   &kp LEFT &kp DOWN &kp UP &kp RIGHT &trans &trans
-   &kp LSHFT &trans       &trans       &kp CLIPBOARD_HISTORY &trans &trans      &mmv MOVE_LEFT   &mouse_down_scroll &mouse_up_scroll &mmv MOVE_RIGHT &trans &trans
+   &kp LSHFT &trans       &trans       &kp CLIPBOARD_HISTORY &trans &trans      &mouse_left_scroll &mouse_down_scroll &mouse_up_scroll &mouse_right_scroll &trans &trans
                                        &kp LGUI     &trans       &kp SPACE      &mkp LCLK  &trans   &mkp RCLK
                         >;
                 };

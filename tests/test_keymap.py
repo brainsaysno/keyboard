@@ -23,18 +23,31 @@ class KeymapTests(unittest.TestCase):
             self.assertEqual(len(entries), 42, name)
             for entry in entries:
                 arity = {"kp": 1, "mt": 2, "mo": 1, "trans": 0, "none": 0,
-                         "mmv": 1, "mkp": 1, "mouse_down_scroll": 0, "mouse_up_scroll": 0,
+                         "mmv": 1, "mkp": 1, "mouse_left_scroll": 0, "mouse_down_scroll": 0,
+                         "mouse_up_scroll": 0, "mouse_right_scroll": 0,
                          "bt": 2 if entry[1:2] == ("BT_SEL",) else 1}[entry[0]]
                 self.assertEqual(len(entry), arity + 1, (name, entry))
 
-    def test_clipboard_and_vertical_mouse_positions(self):
+    def test_clipboard_and_mouse_positions(self):
         lower = self.layers["lower_layer"]
         self.assertEqual(lower[27], ("kp", "CLIPBOARD_HISTORY"))
         self.assertRegex(self.source, r"#define\s+CLIPBOARD_HISTORY\s+F18\b")
-        self.assertEqual(lower[30:34], [("mmv", "MOVE_LEFT"), ("mouse_down_scroll",),
-                                      ("mouse_up_scroll",), ("mmv", "MOVE_RIGHT")])
+        self.assertEqual(lower[30:34], [("mouse_left_scroll",), ("mouse_down_scroll",),
+                                      ("mouse_up_scroll",), ("mouse_right_scroll",)])
         self.assertEqual(lower[18:22], [("kp", "LEFT"), ("kp", "DOWN"), ("kp", "UP"), ("kp", "RIGHT")])
         self.assertEqual(lower[24], ("kp", "LSHFT"))
+
+    def test_scroll_keys_move_and_scroll_the_same_way_with_natural_scrolling(self):
+        # macOS natural scrolling reverses wheel input on both axes, so each key scrolls the
+        # opposite wheel direction to the way it moves the pointer.
+        found = re.findall(r"(\w+_scroll):\s*\w+\s*\{[^}]*?bindings\s*=\s*<&mmv (\w+)>,\s*<&msc (\w+)>;",
+                           self.source, re.S)
+        self.assertEqual({name: (move, scroll) for name, move, scroll in found}, {
+            "mouse_left_scroll": ("MOVE_LEFT", "SCRL_RIGHT"),
+            "mouse_down_scroll": ("MOVE_DOWN", "SCRL_UP"),
+            "mouse_up_scroll": ("MOVE_UP", "SCRL_DOWN"),
+            "mouse_right_scroll": ("MOVE_RIGHT", "SCRL_LEFT"),
+        })
 
     def test_existing_audio_and_bluetooth_bindings(self):
         self.assertEqual(self.layers["raise_layer"][25:30], [

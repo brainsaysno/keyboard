@@ -51,7 +51,7 @@ My [zmk](https://zmk.dev/) config for my wireless, low profile [corne](https://g
 ### Cool Tweaks
 
 - **Ctrl/Esc combo:** Hold for ctrl, tap for escape. This is my most used keymap by far, and it's nice to have it in the firmware so it works in iOS as well
-- **Mouse emulation:** Move cursor and right/left click from lower layer; Shift with mouse up/down scrolls
+- **Mouse emulation:** Move cursor and right/left click from lower layer; Shift with the mouse keys scrolls in any direction
 - **Clipboard history:** Lower+C sends F18, bound in Raycast to Clipboard History
 - **Globe key:** For dictation with Wispr Flow
 - **Media and brightness controls:** On raise layer
@@ -98,12 +98,13 @@ Other Adjust keys are disabled to prevent media or typing actions from falling t
 | Binding | Action |
 | --- | --- |
 | Lower+C | Send `F18` for Raycast Clipboard History |
-| Lower+M | Move mouse down |
-| Lower+comma | Move mouse up |
+| Lower+N / M / comma / period | Move mouse left / down / up / right |
+| Lower+Shift+N | Scroll left |
 | Lower+Shift+M | Scroll down |
 | Lower+Shift+comma | Scroll up |
+| Lower+Shift+period | Scroll right |
 
-Hold Shift before pressing the mouse key. To switch between moving and scrolling, release the mouse key, change Shift, and press it again. Left/right mouse movement and the H/J/K/L arrow keys are unchanged, including Shift+arrows for selecting text. The wheel directions are inverted so the page moves the way the key points with macOS natural scrolling on; with natural scrolling off, they are reversed.
+Hold Shift before pressing the mouse key. To switch between moving and scrolling, release the mouse key, change Shift, and press it again. The H/J/K/L arrow keys are unchanged, including Shift+arrows for selecting text. The wheel directions are inverted on both axes so the page moves the way the key points with macOS natural scrolling on; with natural scrolling off, they are reversed.
 
 The local `zmk,behavior-shift-scroll` behavior sends a keyboard modifier report before scrolling. Stock ZMK v0.3 mod-morph masks modifiers internally but does not itself send that report, and a mouse behavior does not send one either. The helper suppresses Shift during scrolling and restores it when the last scrolling key is released, preventing the host from interpreting vertical wheel events as Shift-scroll.
 

@@ -1,10 +1,10 @@
-// Compiled by tests/test_dashboard_mac.py together with macos/dashboard/Logic.swift.
+// Compiled by tests/test_companion.py together with macos/companion/Logic.swift.
 // Prints "STATE <json>" lines for the Python test to render with render.js.
 
 import Foundation
 
 @main
-enum DashboardMacTest {
+enum CompanionTest {
     static func main() {
         var failures = 0
         func expect<T: Equatable>(_ actual: T, _ expected: T, _ what: String, line: Int = #line) {

@@ -6,7 +6,7 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-DASHBOARD = ROOT / "macos/dashboard"
+COMPANION = ROOT / "macos/companion"
 
 # Renders each state with render.js and lists every key render.js reads that the state lacks,
 # so a misnamed field fails here instead of drawing "UNDEFINED" on the keyboard.
@@ -29,7 +29,7 @@ console.log(JSON.stringify(states.map(state => {
 """
 
 
-class DashboardMacTests(unittest.TestCase):
+class CompanionTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         compiler = shutil.which("swiftc")
@@ -37,9 +37,9 @@ class DashboardMacTests(unittest.TestCase):
             raise AssertionError("swiftc is required")
         # Only the pure logic: no CoreBluetooth, EventKit, or Core Audio in this build.
         with tempfile.TemporaryDirectory() as directory:
-            executable = Path(directory) / "dashboard-mac-test"
-            subprocess.run([compiler, "-warnings-as-errors", str(DASHBOARD / "Logic.swift"),
-                            str(ROOT / "tests/dashboard_mac_test.swift"), "-o", str(executable)], check=True)
+            executable = Path(directory) / "companion-test"
+            subprocess.run([compiler, "-warnings-as-errors", str(COMPANION / "Logic.swift"),
+                            str(ROOT / "tests/companion_test.swift"), "-o", str(executable)], check=True)
             cls.result = subprocess.run([str(executable)], capture_output=True, text=True)
 
     def test_swift_logic(self):
@@ -52,7 +52,7 @@ class DashboardMacTests(unittest.TestCase):
                   for line in self.result.stdout.splitlines() if line.startswith("STATE ")]
         self.assertEqual([s["meet"]["mode"] for s in states],
                          ["none", "next", "next", "alert", "onair", "onair", "onair"])
-        rendered = subprocess.run([node, "-e", RENDER_STATES, str(DASHBOARD / "render.js")],
+        rendered = subprocess.run([node, "-e", RENDER_STATES, str(COMPANION / "render.js")],
                                   input=json.dumps(states), capture_output=True, text=True)
         self.assertEqual(rendered.returncode, 0, rendered.stderr)
         for state, frame in zip(states, json.loads(rendered.stdout)):

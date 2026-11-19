@@ -1,4 +1,5 @@
-// Switches every connected supported headphone between noise cancellation and transparency.
+// Switches every connected supported headphone between noise cancellation and transparency;
+// runs as `corne-companion --headphones <mode>` (see Hotkeys.swift for why it is a child process).
 //
 // AirPods (and Beats): the Bluetooth audio device exposes the listening mode as the
 // undocumented Core Audio property 'lstm', with the supported modes in the 'lsms' bit mask,
@@ -8,26 +9,24 @@
 // publish, as reverse-engineered by SonyHeadphonesClient (github.com/Plutoberth/SonyHeadphonesClient,
 // mos9527 fork). Transparency maps to Ambient Sound, keeping the headphones' current ambient
 // level and voice focus.
-//
-// Usage: headphones-mode noise-cancellation | transparency
 
 import CoreAudio
 import Foundation
 import IOBluetooth
 
-enum Mode: String {
+enum ListeningMode: String {
     case noiseCancellation = "noise-cancellation"
     case transparency
 
     var name: String { self == .noiseCancellation ? "Noise Cancellation" : "Transparency" }
 }
 
-guard CommandLine.arguments.count == 2, let mode = Mode(rawValue: CommandLine.arguments[1]) else {
-    print("usage: headphones-mode noise-cancellation | transparency")
-    exit(1)
+/// Returns the names of the headphones switched; failures are reported on stdout.
+func switchHeadphones(to mode: ListeningMode) -> [String] {
+    setAppleListeningMode(mode) + setSonyMode(mode)
 }
 
-func waitFor(_ seconds: Double, _ done: () -> Bool) -> Bool {
+private func waitFor(_ seconds: Double, _ done: () -> Bool) -> Bool {
     let deadline = Date().addingTimeInterval(seconds)
     while !done() && Date() < deadline {
         RunLoop.current.run(until: Date().addingTimeInterval(0.02))
@@ -37,22 +36,22 @@ func waitFor(_ seconds: Double, _ done: () -> Bool) -> Bool {
 
 // MARK: - AirPods via Core Audio
 
-let listeningModeProperty: AudioObjectPropertySelector = 0x6C73_746D // 'lstm'
-let supportedModesProperty: AudioObjectPropertySelector = 0x6C73_6D73 // 'lsms'
+private let listeningModeProperty: AudioObjectPropertySelector = 0x6C73_746D // 'lstm'
+private let supportedModesProperty: AudioObjectPropertySelector = 0x6C73_6D73 // 'lsms'
 
-func address(_ selector: AudioObjectPropertySelector) -> AudioObjectPropertyAddress {
+private func address(_ selector: AudioObjectPropertySelector) -> AudioObjectPropertyAddress {
     AudioObjectPropertyAddress(mSelector: selector, mScope: kAudioObjectPropertyScopeGlobal,
                                mElement: kAudioObjectPropertyElementMain)
 }
 
-func readUInt32(_ object: AudioObjectID, _ selector: AudioObjectPropertySelector) -> UInt32? {
+private func readUInt32(_ object: AudioObjectID, _ selector: AudioObjectPropertySelector) -> UInt32? {
     var property = address(selector)
     var value: UInt32 = 0
     var size = UInt32(MemoryLayout<UInt32>.size)
     return AudioObjectGetPropertyData(object, &property, 0, nil, &size, &value) == noErr ? value : nil
 }
 
-func deviceName(_ device: AudioObjectID) -> String {
+private func deviceName(_ device: AudioObjectID) -> String {
     var property = address(kAudioObjectPropertyName)
     var name: Unmanaged<CFString>?
     var size = UInt32(MemoryLayout<Unmanaged<CFString>?>.size)
@@ -60,7 +59,7 @@ func deviceName(_ device: AudioObjectID) -> String {
     return name.takeRetainedValue() as String
 }
 
-func audioDevices() -> [AudioObjectID] {
+private func audioDevices() -> [AudioObjectID] {
     let system = AudioObjectID(kAudioObjectSystemObject)
     var property = address(kAudioHardwarePropertyDevices)
     var size: UInt32 = 0
@@ -70,8 +69,7 @@ func audioDevices() -> [AudioObjectID] {
     return devices
 }
 
-/// Returns the names of the devices switched; failures are reported on stdout.
-func setAppleListeningMode(_ mode: Mode) -> [String] {
+private func setAppleListeningMode(_ mode: ListeningMode) -> [String] {
     // 'lstm' values: 1 off, 2 noise cancellation, 3 transparency, 4 adaptive.
     // 'lsms' bits: 0 noise cancellation, 1 transparency, 2 adaptive.
     let (value, supportBit): (UInt32, UInt32) = mode == .noiseCancellation ? (2, 0b01) : (3, 0b10)
@@ -101,13 +99,13 @@ func setAppleListeningMode(_ mode: Mode) -> [String] {
 
 // MARK: - Sony via the MDR protocol
 
-let sonyControlService: IOBluetoothSDPUUID = {
+private let sonyControlService: IOBluetoothSDPUUID = {
     let bytes: [UInt8] = [0x95, 0x6C, 0x7B, 0x26, 0xD4, 0x9A, 0x4B, 0xA8,
                           0xB0, 0x3F, 0xB1, 0x7D, 0x39, 0x3C, 0xB6, 0xE2]
     return IOBluetoothSDPUUID(bytes: bytes, length: bytes.count)
 }()
 
-final class SonyLink: NSObject, IOBluetoothRFCOMMChannelDelegate {
+private final class SonyLink: NSObject, IOBluetoothRFCOMMChannelDelegate {
     private static let start: UInt8 = 0x3E, end: UInt8 = 0x3C, escape: UInt8 = 0x3D
     private static let ackType: UInt8 = 0x01, commandType: UInt8 = 0x0C
 
@@ -175,7 +173,7 @@ final class SonyLink: NSObject, IOBluetoothRFCOMMChannelDelegate {
     }
 }
 
-func setSonyMode(_ mode: Mode) -> [String] {
+private func setSonyMode(_ mode: ListeningMode) -> [String] {
     // NCASM commands: 0x66 get, 0x67 reply, 0x68 set, 0x69 notify. Inquired type 0x17 is the
     // WH-1000XM5 layout: [command, type, changed, on/off, mode (0 NC, 1 ambient), voice focus, level].
     let get: UInt8 = 0x66, reply: UInt8 = 0x67, set: UInt8 = 0x68, notify: UInt8 = 0x69, type: UInt8 = 0x17
@@ -207,12 +205,3 @@ func setSonyMode(_ mode: Mode) -> [String] {
     }
     return switched
 }
-
-// MARK: - Main
-
-let switched = setAppleListeningMode(mode) + setSonyMode(mode)
-guard !switched.isEmpty else {
-    print("No connected headphones support \(mode.name)")
-    exit(1)
-}
-print("\(mode.name): \(switched.joined(separator: ", "))")

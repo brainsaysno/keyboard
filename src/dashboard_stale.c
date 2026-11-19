@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 
-// Port of renderStale() in macos/dashboard/render.js, which is the reference: the right half
+// Port of renderStale() in macos/companion/render.js, which is the reference: the right half
 // draws this screen itself because it has to appear when the Mac app is not running. Plain C
 // with no Zephyr or LVGL includes, so tests/test_dashboard.py can compile it on the host and
 // compare it with render.js pixel for pixel.

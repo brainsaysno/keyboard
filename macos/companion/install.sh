@@ -1,16 +1,21 @@
 #!/bin/sh
-# Builds corne-dashboard into ~/.local/bin and (re)loads its LaunchAgent.
+# Builds corne-companion into ~/.local/bin and (re)loads its LaunchAgent.
 # render.js is embedded in the binary, so rerun this script after changing it.
 set -eu
 
 here=$(cd "$(dirname "$0")" && pwd)
-label=dev.brainsaysno.corne-dashboard
-bin="$HOME/.local/bin/corne-dashboard"
+label=dev.brainsaysno.corne-companion
+bin="$HOME/.local/bin/corne-companion"
 agent="$HOME/Library/LaunchAgents/$label.plist"
-logfile="$HOME/Library/Logs/corne-dashboard.log"
+logfile="$HOME/Library/Logs/corne-companion.log"
 domain="gui/$(id -u)"
+config="$HOME/.config/corne-companion/config.json"
 
-mkdir -p "$(dirname "$bin")" "$(dirname "$agent")" "$(dirname "$logfile")"
+mkdir -p "$(dirname "$bin")" "$(dirname "$agent")" "$(dirname "$logfile")" "$(dirname "$config")"
+if [ ! -f "$config" ]; then
+  cp "$here/config.example.json" "$config"
+  echo "Created $config from config.example.json; edit it, then rerun this script."
+fi
 
 # The embedded Info.plist carries the usage descriptions TCC needs to prompt under launchd.
 # Built beside the target and moved into place: rewriting a running binary in place
@@ -56,4 +61,4 @@ while launchctl print "$domain/$label" >/dev/null 2>&1 && [ "$tries" -lt 50 ]; d
   sleep 0.2
 done
 launchctl bootstrap "$domain" "$agent"
-echo "corne-dashboard running; log: $logfile"
+echo "corne-companion running; config: $config; log: $logfile"

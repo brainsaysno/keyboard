@@ -2,7 +2,7 @@ import CoreAudio
 import EventKit
 import Foundation
 
-/// Logs go to stderr: launchd appends them to ~/Library/Logs/corne-dashboard.log, and stdout
+/// Logs go to stderr: launchd appends them to ~/Library/Logs/corne-companion.log, and stdout
 /// stays clean for --print-state.
 func log(_ message: String) {
     FileHandle.standardError.write(Data("\(Date().ISO8601Format()) \(message)\n".utf8))
@@ -158,9 +158,9 @@ func describe(_ status: EKAuthorizationStatus) -> String {
 
 // MARK: - GitHub
 
-func fetchReview(now: Date) throws -> Review {
+func fetchReview(repo: String, now: Date) throws -> Review {
     let output = try runCommand(["gh", "api", "graphql", "-f", "query=\(reviewQuery)",
-                                 "-f", "requested=\(requestedSearch)", "-f", "mine=\(mineSearch)"],
+                                 "-f", "requested=\(requestedSearch(repo: repo))", "-f", "mine=\(mineSearch(repo: repo))"],
                                 timeout: 30)
     return try parseReview(output, now: now)
 }

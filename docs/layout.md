@@ -27,7 +27,7 @@ Hold Raise (right thumb) and press:
 
 Raise+A/S/D/F/G are the media keys: previous track, play/pause, next track, volume down and volume up.
 
-The firmware only sends `F19` and `F20`. Raycast hotkeys turn them into listening-mode changes; see [Mac setup](../README.md#mac-setup).
+The firmware only sends `F19` and `F20`. The [companion app](../README.md#the-companion-app) turns them into listening-mode changes.
 
 ## Bluetooth setup
 

@@ -195,9 +195,9 @@
     }
   }
 
-  // Your own open PRs in TeracAI/platform as three 22 px columns: ready to merge (RDY), in review
-  // with a person (REV), and still waiting for you to ask someone (ASK). Actionable counts
-  // invert; a count over 99 shows 99 with a small + beside its label.
+  // Your own open PRs in the configured repository as three 22 px columns: ready to merge (RDY),
+  // in review with a person (REV), and still waiting for you to ask someone (ASK). Actionable
+  // counts invert; a count over 99 shows 99 with a small + beside its label.
   function myPrColumn(fb, x, label, n, hot) {
     fb.text(x + (n > 99 ? 0 : 2), 128, label);
     if (n > 99) { fb.hline(x + 19, x + 21, 131); fb.vline(x + 20, 130, 132); }

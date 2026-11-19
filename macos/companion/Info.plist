@@ -3,18 +3,18 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleIdentifier</key>
-	<string>dev.brainsaysno.corne-dashboard</string>
+	<string>dev.brainsaysno.corne-companion</string>
 	<key>CFBundleName</key>
-	<string>corne-dashboard</string>
+	<string>corne-companion</string>
 	<key>CFBundleExecutable</key>
-	<string>corne-dashboard</string>
+	<string>corne-companion</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>corne-dashboard sends your work dashboard to the Corne keyboard's display.</string>
+	<string>corne-companion sends your work dashboard to the Corne keyboard's display and switches your headphones' listening mode.</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
-	<string>corne-dashboard shows your next meeting on the Corne keyboard's display.</string>
+	<string>corne-companion shows your next meeting on the Corne keyboard's display.</string>
 </dict>
 </plist>

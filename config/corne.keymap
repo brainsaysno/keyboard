@@ -12,7 +12,8 @@
 #include <dt-bindings/zmk/bt.h>
 #include <dt-bindings/zmk/pointing.h>
 
-// Raycast maps these to the connected headphones' listening modes (see README, Mac setup).
+// The companion app (macos/companion) turns F19/F20 into headphone listening modes; a Raycast
+// hotkey turns F18 into Clipboard History (see README, Mac setup).
 #define NOISE_CANCELLATION F19
 #define TRANSPARENCY F20
 #define CLIPBOARD_HISTORY F18

@@ -24,8 +24,8 @@ The screen changes at most once a minute, so it never gets in the way of typing.
 
 - **Ctrl/Esc:** tap for Esc, hold for Ctrl. It lives in the firmware, so it works on an iPad too.
 - **Mouse keys:** move the pointer with Lower+N/M/comma/period, hold Shift to scroll in any direction, and click with the right thumb keys.
-- **Headphone modes:** Raise+X and Raise+C switch AirPods or a Sony WH-1000XM5 between noise cancellation and transparency, through Raycast on the Mac.
-- **Clipboard history:** Lower+C opens Raycast's clipboard history.
+- **Headphone modes:** Raise+X and Raise+C switch AirPods or a Sony WH-1000XM5 between noise cancellation and transparency, through the companion app on the Mac.
+- **Clipboard history:** Lower+C sends `F18`, which a Raycast hotkey turns into Raycast's clipboard history.
 - **Dictation:** a Globe key for Wispr Flow.
 - **Media, volume and brightness** on Raise, and **five Bluetooth devices** one keypress apart.
 
@@ -41,26 +41,13 @@ To flash a half, connect it by USB-C, double-tap its reset button, and copy its 
 - **Right-screen firmware changes:** flash the right half.
 - **First install, or changes to how the halves talk:** flash both.
 
-Without the Mac app, the right screen shows "NO DATA" and the keyboard works normally.
+Without the companion app, the right screen shows "NO DATA" and the keyboard works normally.
 
 ## Mac setup
 
-Raycast hotkeys handle the F-keys, so Karabiner-Elements is not needed.
+1. Install [the companion app](#the-companion-app). It draws the right screen and handles the headphone keys.
 
-1. Build the headphones helper and link its Raycast script commands into a Raycast script directory (here `~/.config/raycast/scripts`):
-
-   ```sh
-   swiftc -O macos/headphones-mode.swift -o ~/.local/bin/headphones-mode
-   ln -s "$PWD"/macos/raycast/*.sh ~/.config/raycast/scripts/
-   ```
-
-2. In Raycast Settings → Extensions, record these hotkeys by pressing the Corne keys:
-
-   | Raycast command | Corne keys | Key sent |
-   | --- | --- | --- |
-   | Clipboard History | Lower+C | `F18` |
-   | Headphones Noise Cancellation | Raise+X | `F19` |
-   | Headphones Transparency | Raise+C | `F20` |
+2. In Raycast Settings → Extensions → Clipboard History, record the hotkey by pressing Lower+C, which sends `F18`.
 
 3. Turn off macOS mouse-wheel acceleration, which otherwise makes a held scroll key start slowly and then race. This applies to every mouse:
 
@@ -68,13 +55,9 @@ Raycast hotkeys handle the F-keys, so Karabiner-Elements is not needed.
    defaults write -g com.apple.scrollwheel.scaling -float -1
    ```
 
-4. Optionally, install [the companion app](#the-companion-app) for the right screen.
-
-`headphones-mode` switches every connected supported headphone at once. For AirPods and Beats it sets the listening mode through an undocumented Core Audio property, as found by [pods-control](https://github.com/raulgg/pods-control). For the Sony WH-1000XM5 it sends Sony's own control command, as reverse-engineered by [SonyHeadphonesClient](https://github.com/Plutoberth/SonyHeadphonesClient); Raycast needs Bluetooth permission for this. Both paths are undocumented, so a macOS or headphone update could break them.
-
 ## The companion app
 
-`macos/dashboard/` holds `corne-dashboard`, a background app (LaunchAgent) that draws the right screen once a minute and sends only what changed. The left half is the only half connected to the Mac, so it relays the screen to the right half:
+`macos/companion/` holds `corne-companion`, a background app (LaunchAgent) that draws the right screen and handles the headphone keys. It redraws the screen once a minute and sends only what changed. The left half is the only half connected to the Mac, so it relays the screen to the right half:
 
 ```mermaid
 flowchart LR
@@ -86,36 +69,41 @@ It reads:
 
 - **Agents:** windows in the `tmux` session `work`. An agent marks its window with `@agent_state` set to `ask` or `error`; a window that rang the bell counts as finished.
 - **Meetings:** the macOS calendar (EventKit), next three days. A meeting is an event with a video link or another attendee. ON AIR follows the microphone, so it works for unscheduled calls too.
-- **Pull requests:** `gh`, for `TeracAI/platform`. To review: PRs that request my review personally, not through a team. Mine: ready (approved and mergeable), in review (a person asked or reviewed), and nobody asked yet (only team requests or bot reviews). Drafts don't count.
+- **Pull requests:** `gh`, for my work repo (`githubRepo` in the config). To review: PRs that request my review personally, not through a team. Mine: ready (approved and mergeable), in review (a person asked or reviewed), and nobody asked yet (only team requests or bot reviews). Drafts don't count.
+
+The headphone keys send `F19` (noise cancellation) and `F20` (transparency); the app catches them as global hotkeys, which need no Accessibility permission. It switches every connected AirPods, Beats or Sony WH-1000XM5 at once. AirPods and Beats take the mode through an undocumented Core Audio property, as found by [pods-control](https://github.com/raulgg/pods-control). The Sony gets Sony's own control command, as reverse-engineered by [SonyHeadphonesClient](https://github.com/Plutoberth/SonyHeadphonesClient). Both paths are undocumented, so a macOS or headphone update could break them. `corne-companion --headphones transparency` (or `noise-cancellation`) does the same by hand.
 
 Install or update it (it needs `gh` logged in):
 
 ```sh
-macos/dashboard/install.sh
+macos/companion/install.sh
 ```
 
-The first run asks for Calendar and Bluetooth access. The log is `~/Library/Logs/corne-dashboard.log`. `corne-dashboard --print-state` prints the data it would draw, and `corne-dashboard --snapshot screen.png` writes the screen as an image; neither touches Bluetooth.
+The first run creates `~/.config/corne-companion/config.json` from `config.example.json`; set `githubRepo` there and run `install.sh` again. The app reads the config when it starts, so restart it after editing: `launchctl kickstart -k gui/$(id -u)/dev.brainsaysno.corne-companion`.
 
-To turn it off, run `launchctl bootout gui/$(id -u)/dev.brainsaysno.corne-dashboard`. The right screen shows "NO DATA" two minutes later.
+The first run also asks for Calendar and Bluetooth access. The log is `~/Library/Logs/corne-companion.log`. `corne-companion --print-state` prints the data it would draw, and `corne-companion --snapshot screen.png` writes the screen as an image; neither touches Bluetooth.
+
+To turn it off, run `launchctl bootout gui/$(id -u)/dev.brainsaysno.corne-companion`. The right screen shows "NO DATA" two minutes later.
 
 Only a device paired with the keyboard can write to the screen, because both halves require an encrypted connection. The keyboard treats what it receives as pixels only; it can't type or change the keymap.
 
-`macos/dashboard/render.js` is the only definition of the layout and wording, so changing it needs no firmware flash: rerun `install.sh`, which compiles it into the app. Open `macos/dashboard/preview.html` through a local web server to see every state. The keyboard draws one screen itself, the "NO DATA" screen (`src/dashboard_stale.c`), so it can appear when the Mac is silent.
+`macos/companion/render.js` is the only definition of the layout and wording, so changing it needs no firmware flash: rerun `install.sh`, which compiles it into the app. Open `macos/companion/preview.html` through a local web server to see every state. The keyboard draws one screen itself, the "NO DATA" screen (`src/dashboard_stale.c`), so it can appear when the Mac is silent.
 
 To adapt it:
 
 | What | Where |
 | --- | --- |
-| GitHub repository | `requestedSearch` and `mineSearch` in `macos/dashboard/Logic.swift` |
-| Video call links | `videoCallHosts` in `macos/dashboard/Logic.swift` |
-| tmux session | `collectWaiting` in `macos/dashboard/Collectors.swift` |
-| Your name (for 1:1 titles) and meeting-title shortcuts | `ME` and `ALIASES` in `macos/dashboard/render.js` |
+| GitHub repository | `githubRepo` in `~/.config/corne-companion/config.json` |
+| Video call links | `videoCallHosts` in `macos/companion/Logic.swift` |
+| tmux session | `collectWaiting` in `macos/companion/Collectors.swift` |
+| Your name (for 1:1 titles) and meeting-title shortcuts | `ME` and `ALIASES` in `macos/companion/render.js` |
 
 ## Troubleshooting
 
 - **The Mac shows the Corne stuck "connecting":** macOS's Bluetooth LE process can hold stale state. Run `sudo killall -9 BTLEServer` (macOS restarts it), then reconnect.
 - **A screen looks garbled after flashing:** the half is still in its bootloader, which doesn't drive the screen, because the copy was cut short. Double-tap reset and copy the file again, with a different cable or port if it keeps failing.
 - **The right screen says "NO DATA" or "WAITING FOR MAC APP":** the companion app isn't running or can't reach the keyboard. Check its log. "No connected keyboard offers the dashboard service" means the left half is disconnected or doesn't have the dashboard firmware.
+- **The headphone keys do nothing:** another app owns `F19` or `F20`; the log says "could not register". Remove that app's hotkey (for example an old Raycast one) and restart the companion app.
 
 ## Development
 

@@ -3,7 +3,7 @@
 #pragma once
 
 // Work dashboard on the right half's nice!view. The Mac app renders the whole screen
-// (macos/dashboard/render.js) and streams it Mac -> left half -> right half; every hop carries
+// (macos/companion/render.js) and streams it Mac -> left half -> right half; every hop carries
 // the same messages, one per GATT write, multi-byte values little-endian:
 //   DATA    [0x01][offset lo][offset hi][bytes...]  copy bytes into the back buffer at offset
 //   PRESENT [0x02][crc lo][crc hi]                  show the back buffer if its CRC-16/CCITT-FALSE

@@ -1,10 +1,13 @@
-// corne-dashboard: renders the Corne right half's work dashboard with render.js and streams it
-// to the keyboard over Bluetooth (wire protocol in Logic.swift and src/dashboard_protocol.h).
+// corne-companion: the Corne's Mac companion. It renders the right half's work dashboard with
+// render.js and streams it to the keyboard over Bluetooth (wire protocol in Logic.swift and
+// src/dashboard_protocol.h), and turns the keyboard's F19/F20 keys into headphone listening modes.
 //
-// Usage: corne-dashboard                        run as the LaunchAgent (install.sh)
-//        corne-dashboard --print-state          collect once, print the state JSON
-//        corne-dashboard --snapshot PATH.png    collect once, write a 4x PNG, print the state JSON
+// Usage: corne-companion                        run as the LaunchAgent (install.sh)
+//        corne-companion --print-state          collect once, print the state JSON
+//        corne-companion --snapshot PATH.png    collect once, write a 4x PNG, print the state JSON
+//        corne-companion --headphones noise-cancellation | transparency
 
+import AppKit
 import Foundation
 import MachO
 
@@ -18,14 +21,15 @@ func embeddedRenderScript() -> String? {
 }
 
 /// Every source once, synchronously; the microphone counts as live without debouncing.
-func collectOnce() -> DashboardState {
+func collectOnce(_ config: Config) -> DashboardState {
     let now = Date()
-    let review: Review
-    do {
-        review = try fetchReview(now: now)
-    } catch {
-        log("GitHub: \(error)")
-        review = Review()
+    var review = Review()
+    if let repo = config.githubRepo {
+        do {
+            review = try fetchReview(repo: repo, now: now)
+        } catch {
+            log("GitHub: \(error)")
+        }
     }
     let meetings = CalendarCollector().meetings(now: now)
     return DashboardState(wait: collectWaiting(),
@@ -38,10 +42,11 @@ func collectOnce() -> DashboardState {
 /// queue, one render per second sent to the keyboard.
 final class Dashboard {
     private let renderer: Renderer
+    private let config: Config
     private let transport = Transport()
-    private let tmuxQueue = DispatchQueue(label: "dev.brainsaysno.corne-dashboard.tmux")
-    private let calendarQueue = DispatchQueue(label: "dev.brainsaysno.corne-dashboard.calendar")
-    private let gitHubQueue = DispatchQueue(label: "dev.brainsaysno.corne-dashboard.github")
+    private let tmuxQueue = DispatchQueue(label: "dev.brainsaysno.corne-companion.tmux")
+    private let calendarQueue = DispatchQueue(label: "dev.brainsaysno.corne-companion.calendar")
+    private let gitHubQueue = DispatchQueue(label: "dev.brainsaysno.corne-companion.github")
     private var calendar: CalendarCollector!
     private var timers: [DispatchSourceTimer] = []
 
@@ -54,8 +59,9 @@ final class Dashboard {
     private var renderProblem: String?
     private var gitHubProblem: String?
 
-    init(renderer: Renderer) {
+    init(renderer: Renderer, config: Config) {
         self.renderer = renderer
+        self.config = config
     }
 
     func start() {
@@ -67,7 +73,9 @@ final class Dashboard {
             DispatchQueue.main.async { self?.waiting = waiting }
         }
         repeatEvery(60, on: calendarQueue) { [weak self] in self?.refreshCalendar() }
-        repeatEvery(60, on: gitHubQueue) { [weak self] in self?.refreshReview() }
+        if let repo = config.githubRepo {
+            repeatEvery(60, on: gitHubQueue) { [weak self] in self?.refreshReview(repo: repo) }
+        }
         // Each second for the microphone debounce, just after the boundary so a new minute is
         // seen right away; tick() sends at most one frame a minute.
         let first = Date(timeIntervalSince1970: Date().timeIntervalSince1970.rounded(.down) + 1.02)
@@ -90,9 +98,9 @@ final class Dashboard {
     }
 
     // On gitHubQueue. A failure keeps the last good counts.
-    private func refreshReview() {
+    private func refreshReview(repo: String) {
         do {
-            let review = try fetchReview(now: Date())
+            let review = try fetchReview(repo: repo, now: Date())
             DispatchQueue.main.async {
                 if review.count != self.review.count || review.mine != self.review.mine || self.gitHubProblem != nil {
                     log("GitHub: \(review.count) to review; mine \(review.mine.ready) ready, "
@@ -158,14 +166,20 @@ let arguments = Array(CommandLine.arguments.dropFirst())
 switch (arguments.first, arguments.count) {
 case (nil, _):
     log("Starting")
-    let dashboard = Dashboard(renderer: loadRenderer())
+    let dashboard = Dashboard(renderer: loadRenderer(), config: Config.load())
     dashboard.start()
-    RunLoop.main.run()
+    let hotkeys = Hotkeys(), headphones = HeadphoneSwitcher()
+    for (keyCode, mode) in headphoneHotkeys {
+        hotkeys.register(keyCode: keyCode, name: mode.name) { headphones.request(mode) }
+    }
+    // An event loop for the hotkeys, without a Dock icon or menu bar.
+    NSApplication.shared.setActivationPolicy(.prohibited)
+    NSApplication.shared.run()
 case ("--print-state", 1):
-    print(collectOnce().json)
+    print(collectOnce(Config.load()).json)
 case ("--snapshot", 2):
     let renderer = loadRenderer()
-    let state = collectOnce()
+    let state = collectOnce(Config.load())
     do {
         try writeSnapshot(renderer.frame(state), to: URL(fileURLWithPath: arguments[1]))
     } catch {
@@ -173,7 +187,18 @@ case ("--snapshot", 2):
         exit(1)
     }
     print(state.json)
+case ("--headphones", 2):
+    guard let mode = ListeningMode(rawValue: arguments[1]) else {
+        FileHandle.standardError.write(Data("usage: corne-companion --headphones noise-cancellation | transparency\n".utf8))
+        exit(2)
+    }
+    let switched = switchHeadphones(to: mode)
+    guard !switched.isEmpty else {
+        print("No connected headphones support \(mode.name)")
+        exit(1)
+    }
+    print("\(mode.name): \(switched.joined(separator: ", "))")
 default:
-    FileHandle.standardError.write(Data("usage: corne-dashboard [--print-state | --snapshot PATH.png]\n".utf8))
+    FileHandle.standardError.write(Data("usage: corne-companion [--print-state | --snapshot PATH.png | --headphones MODE]\n".utf8))
     exit(2)
 }

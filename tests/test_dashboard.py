@@ -6,7 +6,7 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-RENDER_JS = ROOT / "macos/dashboard/render.js"
+RENDER_JS = ROOT / "macos/companion/render.js"
 WIDTH, HEIGHT, STRIDE = 68, 160, 9
 
 # Covers every unit of render.js ageLbl() on both sides of its boundaries and all ten digits.

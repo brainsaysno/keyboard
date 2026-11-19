@@ -1,6 +1,6 @@
-// Pure logic for corne-dashboard: the wire protocol, the diff sent each second, and the state
-// the collectors feed to render.js. No I/O, so tests/test_dashboard_mac.py compiles this file on
-// its own with tests/dashboard_mac_test.swift.
+// Pure logic for corne-companion: the wire protocol, the diff sent each second, and the state
+// the collectors feed to render.js. No I/O, so tests/test_companion.py compiles this file on
+// its own with tests/companion_test.swift.
 
 import Foundation
 
@@ -147,7 +147,7 @@ func classifyWaiting(_ output: String) -> Waiting {
     return waiting
 }
 
-// MARK: - Pull requests (TeracAI/platform)
+// MARK: - Pull requests (one repository, set in the config)
 
 struct MyPullRequests: Encodable, Equatable {
     var ready = 0
@@ -161,8 +161,8 @@ struct Review: Encodable, Equatable {
     var mine = MyPullRequests()
 }
 
-let requestedSearch = "repo:TeracAI/platform is:pr is:open user-review-requested:@me"
-let mineSearch = "repo:TeracAI/platform is:pr is:open author:@me draft:false"
+func requestedSearch(repo: String) -> String { "repo:\(repo) is:pr is:open user-review-requested:@me" }
+func mineSearch(repo: String) -> String { "repo:\(repo) is:pr is:open author:@me draft:false" }
 
 /// Run as `gh api graphql -f query=... -f requested=<requestedSearch> -f mine=<mineSearch>`.
 let reviewQuery = """

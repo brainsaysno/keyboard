@@ -1,0 +1,75 @@
+# keymap-drawer settings for docs/images/keymap.svg. Regenerate from the repo root:
+#
+#   uvx --from keymap-drawer==0.23.0 keymap -c docs/keymap-drawer.yaml parse -z config/corne.keymap -l Base Lower Raise Adjust \
+#     | uvx --from keymap-drawer==0.23.0 keymap -c docs/keymap-drawer.yaml draw - -o docs/images/keymap.svg
+#
+# Layer names go on the command line (-l) because keymap-drawer has no config setting for them.
+
+parse_config:
+  # Legends break onto a new line at each single space; a double space keeps the words on one line.
+  raw_binding_map:
+    # Base
+    "&kp TAB": Tab
+    "&kp BSPC": Bksp
+    "&mt LCTRL ESC": {t: Esc, h: Ctrl}
+    "&kp SCLN": ";"
+    "&kp QUOT": "'"
+    "&kp LSHFT": Shift
+    "&kp GLOBE": {t: Globe, h: dictate}
+    "&kp LGUI": Cmd
+    "&kp SPACE": Space
+    "&kp RET": Enter
+    "&kp RALT": Option
+    # Lower
+    "&kp LEFT": $$arrow-left$$
+    "&kp DOWN": $$arrow-down$$
+    "&kp UP": $$arrow-up$$
+    "&kp RIGHT": $$arrow-right$$
+    "&kp CLIPBOARD_HISTORY": Clipboard
+    # Mouse movement; with Shift held these scroll the same way.
+    "&mouse_left_scroll": {t: $$pointer-left$$, h: ⇧ scroll}
+    "&mouse_down_scroll": {t: $$pointer-down$$, h: ⇧ scroll}
+    "&mouse_up_scroll": {t: $$pointer-up$$, h: ⇧ scroll}
+    "&mouse_right_scroll": {t: $$pointer-right$$, h: ⇧ scroll}
+    "&mkp LCLK": Left click
+    "&mkp RCLK": Right click
+    "&bt BT_SEL 0": BT1
+    "&bt BT_SEL 1": BT2
+    "&bt BT_SEL 2": BT3
+    "&bt BT_SEL 3": BT4
+    "&bt BT_SEL 4": BT5
+    # Raise
+    "&kp C_PREV": Prev
+    "&kp C_PP": Play Pause
+    "&kp C_NEXT": Next
+    "&kp C_VOL_DN": Vol  −
+    "&kp C_VOL_UP": Vol  +
+    "&kp C_MUTE": Mute
+    "&kp NOISE_CANCELLATION": ANC
+    "&kp TRANSPARENCY": Trans- parency
+    "&kp C_BRI_DN": Bri  −
+    "&kp C_BRI_UP": Bri  +
+    # Adjust
+    "&bt BT_PRV": BT prev
+    "&bt BT_NXT": BT next
+    "&bt BT_CLR": BT clear
+
+draw_config:
+  key_w: 64
+  key_h: 60
+  dark_mode: auto
+  footer_text: "Highlighted keys are held. Adjust: hold Lower and Raise together."
+  # 13px keeps seven-letter legends such as "parency" inside the key.
+  svg_extra_style: |
+    svg.keymap { font-size: 13px; }
+  glyph_tap_size: 16
+  # Arrow keys and mouse pointer arrows, kept inline so drawing needs no network access.
+  glyphs:
+    arrow-up: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2 3.5 10.5l2.1 2.1 4.9-4.9V22h3V7.7l4.9 4.9 2.1-2.1Z"/></svg>'
+    arrow-right: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path transform="rotate(90 12 12)" d="M12 2 3.5 10.5l2.1 2.1 4.9-4.9V22h3V7.7l4.9 4.9 2.1-2.1Z"/></svg>'
+    arrow-down: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path transform="rotate(180 12 12)" d="M12 2 3.5 10.5l2.1 2.1 4.9-4.9V22h3V7.7l4.9 4.9 2.1-2.1Z"/></svg>'
+    arrow-left: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path transform="rotate(270 12 12)" d="M12 2 3.5 10.5l2.1 2.1 4.9-4.9V22h3V7.7l4.9 4.9 2.1-2.1Z"/></svg>'
+    pointer-up: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2 20 21 12 16.5 4 21Z"/></svg>'
+    pointer-right: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path transform="rotate(90 12 12)" d="M12 2 20 21 12 16.5 4 21Z"/></svg>'
+    pointer-down: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path transform="rotate(180 12 12)" d="M12 2 20 21 12 16.5 4 21Z"/></svg>'
+    pointer-left: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path transform="rotate(270 12 12)" d="M12 2 20 21 12 16.5 4 21Z"/></svg>'

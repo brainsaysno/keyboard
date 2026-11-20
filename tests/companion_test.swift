@@ -89,11 +89,11 @@ enum CompanionTest {
             return bucket(pr, viewer: "me")
         }
         let claude = (type: "Bot", login: "claude", state: "APPROVED")
-        let german = (type: "User", login: "germanfndez", state: "APPROVED")
-        expect(bucketOf(pullRequest("APPROVED", "CLEAN", reviews: [claude, german])), .ready, "APPROVED + CLEAN")
+        let alex = (type: "User", login: "alex", state: "APPROVED")
+        expect(bucketOf(pullRequest("APPROVED", "CLEAN", reviews: [claude, alex])), .ready, "APPROVED + CLEAN")
         expect(bucketOf(pullRequest("APPROVED", "UNKNOWN", requests: ["Team"], reviews: [claude])), .ready, "APPROVED + UNKNOWN")
-        expect(bucketOf(pullRequest("APPROVED", "UNSTABLE", reviews: [claude, german])), .ready, "APPROVED + UNSTABLE")
-        expect(bucketOf(pullRequest("APPROVED", "BLOCKED", reviews: [claude, german])), .inReview, "APPROVED + BLOCKED, user review")
+        expect(bucketOf(pullRequest("APPROVED", "UNSTABLE", reviews: [claude, alex])), .ready, "APPROVED + UNSTABLE")
+        expect(bucketOf(pullRequest("APPROVED", "BLOCKED", reviews: [claude, alex])), .inReview, "APPROVED + BLOCKED, user review")
         expect(bucketOf(pullRequest("APPROVED", "BEHIND", reviews: [claude])), .notAsked, "APPROVED by a bot + BEHIND")
         expect(bucketOf(pullRequest(nil, "BLOCKED", requests: ["Team"], reviews: [claude])), .notAsked,
                "team-only request + bot review")
@@ -101,11 +101,11 @@ enum CompanionTest {
                "team + user request")
         expect(bucketOf(pullRequest(nil, "BLOCKED", requests: ["Bot"])), .notAsked, "bot request")
         expect(bucketOf(pullRequest("CHANGES_REQUESTED", "BLOCKED",
-                                    reviews: [(type: "User", login: "germanfndez", state: "CHANGES_REQUESTED")])),
+                                    reviews: [(type: "User", login: "alex", state: "CHANGES_REQUESTED")])),
                .inReview, "changes requested by a user")
         expect(bucketOf(pullRequest(nil, "BLOCKED", reviews: [(type: "User", login: "me", state: "COMMENTED")])),
                .notAsked, "my own replies are not a review")
-        expect(bucketOf(pullRequest(nil, "BLOCKED", reviews: [(type: "User", login: "germanfndez", state: "PENDING")])),
+        expect(bucketOf(pullRequest(nil, "BLOCKED", reviews: [(type: "User", login: "alex", state: "PENDING")])),
                .notAsked, "an unsubmitted review")
 
         let requestedJSON = #"""
@@ -161,7 +161,7 @@ enum CompanionTest {
                true, "teams link, any case")
         expect(isMeeting(CalendarEntry(title: "1:1", start: start, end: end, hasOtherAttendee: true)), true, "attendee")
 
-        let oneOnOne = meeting("Gio / Nico - 1:1", at(10, 14, 0), minutes: 30)
+        let oneOnOne = meeting("Sam / Nico - 1:1", at(10, 14, 0), minutes: 30)
         let sync2 = meeting("Eng Weekly Priority Sync", at(10, 15, 0), minutes: 30)
         let day = [oneOnOne, sync2]
         func mode(_ meetings: [Meeting], _ now: Date, live: Date? = nil) -> MeetState {
@@ -169,16 +169,16 @@ enum CompanionTest {
         }
         expect(mode([], at(10, 13, 53)), .noMeeting, "no meetings")
         expect(mode(day, at(10, 13, 53)),
-               .next(title: "Gio / Nico - 1:1", minsTo: 7, start: 840, dur: 30, day: 0, dow: "TUE", then: 900),
+               .next(title: "Sam / Nico - 1:1", minsTo: 7, start: 840, dur: 30, day: 0, dow: "TUE", then: 900),
                "next meeting today, then the one after")
         expect(mode(day, at(10, 13, 52, 30)),
-               .next(title: "Gio / Nico - 1:1", minsTo: 8, start: 840, dur: 30, day: 0, dow: "TUE", then: 900),
+               .next(title: "Sam / Nico - 1:1", minsTo: 8, start: 840, dur: 30, day: 0, dow: "TUE", then: 900),
                "minutes round up")
         expect(mode(day, at(10, 13, 57, 59)),
-               .next(title: "Gio / Nico - 1:1", minsTo: 3, start: 840, dur: 30, day: 0, dow: "TUE", then: 900),
+               .next(title: "Sam / Nico - 1:1", minsTo: 3, start: 840, dur: 30, day: 0, dow: "TUE", then: 900),
                "121 s before: still next")
-        expect(mode(day, at(10, 13, 58)), .alert(title: "Gio / Nico - 1:1", minsTo: 2, start: 840), "120 s before: alert")
-        expect(mode(day, at(10, 13, 59, 0.5)), .alert(title: "Gio / Nico - 1:1", minsTo: 1, start: 840),
+        expect(mode(day, at(10, 13, 58)), .alert(title: "Sam / Nico - 1:1", minsTo: 2, start: 840), "120 s before: alert")
+        expect(mode(day, at(10, 13, 59, 0.5)), .alert(title: "Sam / Nico - 1:1", minsTo: 1, start: 840),
                "alert minutes round up")
         expect(mode(day, at(10, 14, 0)),
                .next(title: "Eng Weekly Priority Sync", minsTo: 60, start: 900, dur: 30, day: 0, dow: "TUE", then: nil),
@@ -190,12 +190,12 @@ enum CompanionTest {
         expect(mode([meeting("Fri", at(13, 13, 54), minutes: 30)], at(10, 13, 53)), .noMeeting, "beyond 3 days")
 
         expect(mode(day, at(10, 14, 5, 59), live: at(10, 13, 58)),
-               .onair(title: "Gio / Nico - 1:1", elapsed: 5, start: 840, dur: 30, next: 55),
+               .onair(title: "Sam / Nico - 1:1", elapsed: 5, start: 840, dur: 30, next: 55),
                "on air in a meeting; elapsed minutes round down")
         expect(mode(day, at(10, 13, 59), live: at(10, 13, 58)),
                .onair(title: nil, elapsed: 1, start: 838, dur: 0, next: 1), "on air before the meeting starts")
         expect(mode(day, at(10, 14, 40), live: at(10, 13, 58)),
-               .onair(title: "Gio / Nico - 1:1", elapsed: 40, start: 840, dur: 30, next: 20), "meeting running over")
+               .onair(title: "Sam / Nico - 1:1", elapsed: 40, start: 840, dur: 30, next: 20), "meeting running over")
         expect(mode(day, at(10, 15, 2), live: at(10, 13, 58)),
                .onair(title: "Eng Weekly Priority Sync", elapsed: 2, start: 900, dur: 30, next: nil),
                "back-to-back: the latest meeting")
